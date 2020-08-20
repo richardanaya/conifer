@@ -22,7 +22,7 @@ fn main() {
             }
         }
         let should_exit = pointer.is_down;
-        return should_exit;
+        should_exit
     })
 }
 ```

@@ -77,6 +77,17 @@ pub fn run(mut f: impl FnMut(&mut Frame, &Pointer, usize) -> bool) {
 
     //let _ = Framebuffer::set_kd_mode(KdMode::Graphics).unwrap();
     let mut buffer = [0; 24];
+
+    let t = start.elapsed().as_millis() as usize;
+    let delta_t = t - last_t;
+    last_t = t;
+
+    let exit = f(&mut frame, &mut pointer, delta_t);
+    let _ = framebuffer.write_frame(&frame.pixels);
+    if exit {
+        return;
+    }
+
     loop {
         let mut b = (&device).take(24).into_inner();
         b.read(&mut buffer);
@@ -112,6 +123,5 @@ pub fn run(mut f: impl FnMut(&mut Frame, &Pointer, usize) -> bool) {
         }
     }
 
-    let _ = std::io::stdin().read_line(&mut String::new());
     //let _ = Framebuffer::set_kd_mode(KdMode::Text).unwrap();
 }

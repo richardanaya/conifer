@@ -1,6 +1,6 @@
 fn main() {
     let mut t = 0;
-    conifer::run(|frame, _pointer, delta_time| {
+    conifer::run(|frame, pointer, delta_time| {
         for y in 0..frame.height {
             for x in 0..frame.width {
                 t += delta_time;
@@ -13,6 +13,6 @@ fn main() {
                 );
             }
         }
-        return true;
+        pointer.is_down
     })
 }

@@ -1,7 +1,18 @@
 use framebuffer::{Framebuffer, KdMode};
-use std::time::Instant;
+use std::fs::OpenOptions;
 use std::io::Read;
-use std::fs::{OpenOptions};
+use std::time::Instant;
+
+const EV_KEY: u32 = 1;
+const EV_ABS: u32 = 3;
+const EV_MSC: u32 = 4;
+const ABS_X: u32 = 0;
+const ABS_Y: u32 = 1;
+const ABS_MT_SLOT: u32 = 47;
+const ABS_MT_POSITION_X: u32 = 53;
+const ABS_MT_POSITION_Y: u32 = 54;
+const ABS_MT_TRACKING_ID: u32 = 57;
+const SYN: u32 = 0;
 
 pub struct Pointer {
     pub is_down: bool,
@@ -37,8 +48,9 @@ impl Frame {
 
 pub fn run(mut f: impl FnMut(&mut Frame, &Pointer, usize) -> bool) {
     let device = OpenOptions::new()
-            .read(true)
-            .open("/dev/input/mouse2").unwrap();
+        .read(true)
+        .open("/dev/input/event6")
+        .unwrap();
     let mut framebuffer = Framebuffer::new("/dev/fb0").unwrap();
     let mut pointer = Pointer {
         is_down: false,
@@ -60,18 +72,37 @@ pub fn run(mut f: impl FnMut(&mut Frame, &Pointer, usize) -> bool) {
     };
 
     let _ = Framebuffer::set_kd_mode(KdMode::Graphics).unwrap();
-    let mut buffer = [0;3];
+    let mut buffer = [0; 3];
     loop {
-        let mut b = (&device).take(3).into_inner();
+        let mut b = (&device).take(24);
+        let mut buffer = [0; 24];
         b.read(&mut buffer);
-      
-        let t = start.elapsed().as_millis() as usize;
-        let delta_t = t - last_t;
-        last_t = t;
-        let exit = f(&mut frame, &mut pointer, delta_t);
-        let _ = framebuffer.write_frame(&frame.pixels);
-        if exit {
-            break;
+        let code_a = (buffer[17] as u32) << 8 | buffer[16] as u32;
+        let code_b = (buffer[19] as u32) << 8 | buffer[18] as u32;
+        let mut did_update = false;
+        let value = (buffer[23] as u32) << 24
+            | (buffer[22] as u32) << 16
+            | (buffer[21] as u32) << 8
+            | (buffer[2] as u32);
+        if code_a == EV_ABS {
+            if code_b == ABS_MT_POSITION_X {
+                pointer.x = value as usize;
+                did_update = true;
+            } else if code_b == ABS_MT_POSITION_Y {
+                pointer.y = value as usize;
+                did_update = true;
+            }
+        }
+
+        if did_update {
+            let t = start.elapsed().as_millis() as usize;
+            let delta_t = t - last_t;
+            last_t = t;
+            let exit = f(&mut frame, &mut pointer, delta_t);
+            let _ = framebuffer.write_frame(&frame.pixels);
+            if exit {
+                break;
+            }
         }
     }
 

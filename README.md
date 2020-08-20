@@ -1,5 +1,14 @@
 # Conifer
 
+'''
+# Make sure your user is a part of video and input group
+sudo addusr video richard 
+sudo addusr input richard
+# Logout and login
+# verify the touch device in code matches your phone
+cat /proc/bus/input/devices
+'''
+
 A simple frame buffer game engine for PinePhone.
 
 * Frame buffer ( no X11 required! )

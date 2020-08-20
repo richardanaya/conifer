@@ -13,7 +13,7 @@ const ABS_MT_POSITION_X: u32 = 53;
 const ABS_MT_POSITION_Y: u32 = 54;
 const ABS_MT_TRACKING_ID: u32 = 57;
 const SYN: u32 = 0;
-const BUTTON_LEFT: u32 = 372;
+const BUTTON_LEFT: u32 = 330;
 
 const INPUT_WIDTH: f32 = 719.0;
 const INPUT_HEIGHT: f32 = 1439.0;
@@ -75,7 +75,7 @@ pub fn run(mut f: impl FnMut(&mut Frame, &Pointer, usize) -> bool) {
         pixels: vec![0u8; line_length * h],
     };
 
-    //let _ = Framebuffer::set_kd_mode(KdMode::Graphics).unwrap();
+    let _ = Framebuffer::set_kd_mode(KdMode::Graphics).unwrap();
     let mut buffer = [0; 24];
 
     let t = start.elapsed().as_millis() as usize;
@@ -100,7 +100,13 @@ pub fn run(mut f: impl FnMut(&mut Frame, &Pointer, usize) -> bool) {
             | (buffer[20] as u32);
         let mut did_update = false;
         if code_a == EV_KEY {
-            println!("{} {}", code_b, value);
+            if code_b == BUTTON_LEFT {
+                if value == 1 {
+                    pointer.is_down = true;
+                } else {
+                    pointer.is_down = false;
+                }
+            }
             did_update = true;
         } else if code_a == EV_ABS {
             if code_b == ABS_X {
@@ -123,5 +129,5 @@ pub fn run(mut f: impl FnMut(&mut Frame, &Pointer, usize) -> bool) {
         }
     }
 
-    //let _ = Framebuffer::set_kd_mode(KdMode::Text).unwrap();
+    let _ = Framebuffer::set_kd_mode(KdMode::Text).unwrap();
 }

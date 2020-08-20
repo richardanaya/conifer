@@ -13,7 +13,7 @@ const SYN: u32 = 0;
 fn main() {
     let device = OpenOptions::new()
         .read(true)
-        .open("/dev/input/event6")
+        .open("/dev/input/event3")
         .unwrap();
     let mut x = 0 as i32;
     let mut y = 0 as i32;
@@ -49,19 +49,19 @@ fn main() {
             //  println!("EV_MISC {} {}", code_b, value);
         } else if code_a == EV_ABS {
             if code_b == ABS_X {
-                println!("EV_ABS ABS_X {}", value);
+                // println!("EV_ABS ABS_X {}", value);
             } else if code_b == ABS_Y {
-                println!("EV_ABS ABS_Y {}", value);
+                // println!("EV_ABS ABS_Y {}", value);
             } else if code_b == ABS_MT_SLOT {
-                println!("EV_ABS ABS_MT_SLOT {}", value);
+                // println!("EV_ABS ABS_MT_SLOT {}", value);
             } else if code_b == ABS_MT_TRACKING_ID {
-                println!("EV_ABS ABS_MT_TRACKING_ID {}", value);
+                //println!("EV_ABS ABS_MT_TRACKING_ID {}", value);
             } else if code_b == ABS_MT_POSITION_X {
                 println!("EV_ABS ABS_MT_POSITION_X {}", value);
             } else if code_b == ABS_MT_POSITION_Y {
                 println!("EV_ABS ABS_MT_POSITION_Y {}", value);
             } else {
-                println!("EV_ABS unknown code_b {}", code_b);
+                //println!("EV_ABS unknown code_b {}", code_b);
             }
         } else if code_a == SYN {
             //  println!("SYN");

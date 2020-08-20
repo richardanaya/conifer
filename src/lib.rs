@@ -1,7 +1,22 @@
 use framebuffer::{Framebuffer, KdMode};
-use std::time::Instant;
+use std::fs::OpenOptions;
 use std::io::Read;
-use std::fs::{OpenOptions};
+use std::time::Instant;
+
+const EV_KEY: u32 = 1;
+const EV_ABS: u32 = 3;
+const EV_MSC: u32 = 4;
+const ABS_X: u32 = 0;
+const ABS_Y: u32 = 1;
+const ABS_MT_SLOT: u32 = 47;
+const ABS_MT_POSITION_X: u32 = 53;
+const ABS_MT_POSITION_Y: u32 = 54;
+const ABS_MT_TRACKING_ID: u32 = 57;
+const SYN: u32 = 0;
+const BUTTON_LEFT: u32 = 372;
+
+const INPUT_WIDTH: f32 = 719.0;
+const INPUT_HEIGHT: f32 = 1439.0;
 
 pub struct Pointer {
     pub is_down: bool,
@@ -37,8 +52,9 @@ impl Frame {
 
 pub fn run(mut f: impl FnMut(&mut Frame, &Pointer, usize) -> bool) {
     let device = OpenOptions::new()
-            .read(true)
-            .open("/dev/input/mouse2").unwrap();
+        .read(true)
+        .open("/dev/input/event3")
+        .unwrap();
     let mut framebuffer = Framebuffer::new("/dev/fb0").unwrap();
     let mut pointer = Pointer {
         is_down: false,
@@ -59,12 +75,33 @@ pub fn run(mut f: impl FnMut(&mut Frame, &Pointer, usize) -> bool) {
         pixels: vec![0u8; line_length * h],
     };
 
-    let _ = Framebuffer::set_kd_mode(KdMode::Graphics).unwrap();
-    let mut buffer = [0;3];
+    //let _ = Framebuffer::set_kd_mode(KdMode::Graphics).unwrap();
+    let mut buffer = [0; 24];
     loop {
-        let mut b = (&device).take(3).into_inner();
+        let mut b = (&device).take(24).into_inner();
         b.read(&mut buffer);
-      
+
+        let code_a = (buffer[17] as u32) << 8 | buffer[16] as u32;
+        let code_b = (buffer[19] as u32) << 8 | buffer[18] as u32;
+        let value = (buffer[23] as u32) << 24
+            | (buffer[22] as u32) << 16
+            | (buffer[21] as u32) << 8
+            | (buffer[20] as u32);
+        let mut did_update = false;
+        if code_a == EV_KEY {
+            println!("{} {}", code_b, value);
+            did_update = true;
+        } else if code_a == EV_ABS {
+            if code_b == ABS_X {
+                pointer.x = (value as f32 / INPUT_WIDTH * w as f32) as usize;
+                did_update = true;
+            } else if code_b == ABS_Y {
+                pointer.y = (value as f32 / INPUT_HEIGHT * h as f32) as usize;
+                did_update = true;
+            }
+        } else if code_a == SYN {
+        }
+
         let t = start.elapsed().as_millis() as usize;
         let delta_t = t - last_t;
         last_t = t;
@@ -76,5 +113,5 @@ pub fn run(mut f: impl FnMut(&mut Frame, &Pointer, usize) -> bool) {
     }
 
     let _ = std::io::stdin().read_line(&mut String::new());
-    let _ = Framebuffer::set_kd_mode(KdMode::Text).unwrap();
+    //let _ = Framebuffer::set_kd_mode(KdMode::Text).unwrap();
 }

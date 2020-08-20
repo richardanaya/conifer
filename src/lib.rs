@@ -103,18 +103,19 @@ pub fn run(mut f: impl FnMut(&mut Frame, &Pointer, usize) -> bool) {
             if code_b == BUTTON_LEFT {
                 if value == 1 {
                     pointer.is_down = true;
+                    did_update = true;
                 } else {
                     pointer.is_down = false;
                 }
             }
-            did_update = true;
         } else if code_a == EV_ABS {
             if code_b == ABS_X {
+                println!("{} {} {} {} ",value,INPUT_WIDTH,w,(value as f32 / INPUT_WIDTH * w as f32) as usize);
                 pointer.x = (value as f32 / INPUT_WIDTH * w as f32) as usize;
-                did_update = true;
             } else if code_b == ABS_Y {
+                 println!("{} {} {} {} ",value,INPUT_HEIGHT,h,(value as f32 / INPUT_HEIGHT * h as f32) as usize);
+
                 pointer.y = (value as f32 / INPUT_HEIGHT * h as f32) as usize;
-                did_update = true;
             }
         } else if code_a == SYN {
         }
@@ -129,5 +130,5 @@ pub fn run(mut f: impl FnMut(&mut Frame, &Pointer, usize) -> bool) {
         }
     }
 
-    let _ = Framebuffer::set_kd_mode(KdMode::Text).unwrap();
+   let _ = Framebuffer::set_kd_mode(KdMode::Text).unwrap();
 }

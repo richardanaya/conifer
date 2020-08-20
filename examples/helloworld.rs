@@ -1,4 +1,3 @@
-
 fn main() {
     conifer::run(|frame, pointer, delta_time| {
         for y in 0..frame.height {

@@ -110,10 +110,22 @@ pub fn run(mut f: impl FnMut(&mut Frame, &Pointer, usize) -> bool) {
             }
         } else if code_a == EV_ABS {
             if code_b == ABS_X {
-                println!("{} {} {} {} ",value,INPUT_WIDTH,w,(value as f32 / INPUT_WIDTH * w as f32) as usize);
+                println!(
+                    "{} {} {} {} ",
+                    value,
+                    INPUT_WIDTH,
+                    w,
+                    (value as f32 / INPUT_WIDTH * w as f32) as usize
+                );
                 pointer.x = (value as f32 / INPUT_WIDTH * w as f32) as usize;
             } else if code_b == ABS_Y {
-                 println!("{} {} {} {} ",value,INPUT_HEIGHT,h,(value as f32 / INPUT_HEIGHT * h as f32) as usize);
+                println!(
+                    "{} {} {} {} ",
+                    value,
+                    INPUT_HEIGHT,
+                    h,
+                    (value as f32 / INPUT_HEIGHT * h as f32) as usize
+                );
 
                 pointer.y = (value as f32 / INPUT_HEIGHT * h as f32) as usize;
             }
@@ -130,5 +142,5 @@ pub fn run(mut f: impl FnMut(&mut Frame, &Pointer, usize) -> bool) {
         }
     }
 
-   let _ = Framebuffer::set_kd_mode(KdMode::Text).unwrap();
+    let _ = Framebuffer::set_kd_mode(KdMode::Text).unwrap();
 }

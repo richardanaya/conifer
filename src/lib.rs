@@ -1,5 +1,7 @@
 use framebuffer::{Framebuffer, KdMode};
 use std::time::Instant;
+use std::io::Read;
+use std::fs::{OpenOptions};
 
 pub struct Pointer {
     pub is_down: bool,
@@ -34,6 +36,9 @@ impl Frame {
 }
 
 pub fn run(mut f: impl FnMut(&mut Frame, &Pointer, usize) -> bool) {
+    let device = OpenOptions::new()
+            .read(true)
+            .open("/dev/input/mouse2").unwrap();
     let mut framebuffer = Framebuffer::new("/dev/fb0").unwrap();
     let mut pointer = Pointer {
         is_down: false,
@@ -55,8 +60,11 @@ pub fn run(mut f: impl FnMut(&mut Frame, &Pointer, usize) -> bool) {
     };
 
     let _ = Framebuffer::set_kd_mode(KdMode::Graphics).unwrap();
-
+    let mut buffer = [0;3];
     loop {
+        let mut b = (&device).take(3).into_inner();
+        b.read(&mut buffer);
+      
         let t = start.elapsed().as_millis() as usize;
         let delta_t = t - last_t;
         last_t = t;

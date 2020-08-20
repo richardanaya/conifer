@@ -8,11 +8,11 @@ fn main() {
                     x,
                     y,
                     ((x as f32 / 255.0) * 255.0) as u8,
-                    ((y as f32 / 255.0) * 255.0) as u8,
-                    (f32::sin(t as f32) * 255.0) as u8,
+ 0,//                   ((y as f32 / 255.0) * 255.0) as u8,
+                    0 as u8,
                 );
             }
         }
-        pointer.is_down
+        true
     })
 }

@@ -3,6 +3,8 @@ use std::fs::OpenOptions;
 use std::io::Read;
 use std::time::Instant;
 
+use std::collections::HashMap;
+
 const EV_KEY: u32 = 1;
 const EV_ABS: u32 = 3;
 const EV_MSC: u32 = 4;
@@ -50,6 +52,13 @@ impl Frame {
     }
 }
 
+enum StreamedCoord {
+    X(usize),
+    Y(usize),
+    XY(usize,usize),
+    Nothing,
+}
+
 pub fn run(mut f: impl FnMut(&mut Frame, &Pointer, usize) -> bool) {
     let device = OpenOptions::new()
         .read(true)
@@ -88,6 +97,8 @@ pub fn run(mut f: impl FnMut(&mut Frame, &Pointer, usize) -> bool) {
         return;
     }
 
+    let mut points: HashMap<String, StreamedCoord> = HashMap::new();
+
     loop {
         let mut b = (&device).take(16).into_inner();
         b.read(&mut buffer);
@@ -98,6 +109,9 @@ pub fn run(mut f: impl FnMut(&mut Frame, &Pointer, usize) -> bool) {
             | (buffer[14] as u32) << 16
             | (buffer[13] as u32) << 8
             | (buffer[12] as u32);
+
+        let timeval = format!("{:03}{:03}{:03}{:03}{:03}{:03}{:03}{:03}", buffer[0],buffer[1],buffer[2],buffer[3],buffer[4],buffer[5],buffer[6],buffer[7]);
+
         let mut did_update = false;
         if code_a == EV_KEY {
             if code_b == BUTTON_LEFT {
@@ -117,7 +131,14 @@ pub fn run(mut f: impl FnMut(&mut Frame, &Pointer, usize) -> bool) {
                     w,
                     (value as f32 / INPUT_WIDTH * w as f32) as usize
                 );
-                pointer.x = (value as f32 / INPUT_WIDTH * w as f32) as usize;
+                if let Some(thing) = points.get(&timeval) {
+                    match thing {
+                        StreamedCoord::Y(y) => points.insert(timeval.clone(), StreamedCoord::XY((value as f32 / INPUT_WIDTH * w as f32) as usize, *y)),
+                        _ => None,
+                    };
+                } else {
+                    points.insert(timeval.clone(), StreamedCoord::X((value as f32 / INPUT_WIDTH * w as f32) as usize));
+                }
             } else if code_b == ABS_Y {
                 println!(
                     "{} {} {} {} ",
@@ -127,7 +148,14 @@ pub fn run(mut f: impl FnMut(&mut Frame, &Pointer, usize) -> bool) {
                     (value as f32 / INPUT_HEIGHT * h as f32) as usize
                 );
 
-                pointer.y = (value as f32 / INPUT_HEIGHT * h as f32) as usize;
+                if let Some(thing) = points.get(&timeval) {
+                    match thing {
+                        StreamedCoord::X(x) => points.insert(timeval.clone(), StreamedCoord::XY(*x, (value as f32 / INPUT_HEIGHT * h as f32) as usize)),
+                        _ => (None),
+                    };
+                } else {
+                    points.insert(timeval.clone(),StreamedCoord::Y((value as f32 / INPUT_HEIGHT * h as f32) as usize));
+                }
             }
         } else if code_a == SYN {
         }
@@ -135,7 +163,12 @@ pub fn run(mut f: impl FnMut(&mut Frame, &Pointer, usize) -> bool) {
         let t = start.elapsed().as_millis() as usize;
         let delta_t = t - last_t;
         last_t = t;
-        let exit = f(&mut frame, &mut pointer, delta_t);
+        let mut exit = false;
+        if let Some(StreamedCoord::XY(x,y)) = points.get(&timeval) {
+            pointer.x = *x;
+            pointer.y = *y;
+            exit = f(&mut frame, &mut pointer, delta_t);
+        }
         let _ = framebuffer.write_frame(&frame.pixels);
         if exit {
             break;

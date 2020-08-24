@@ -120,6 +120,7 @@ pub fn run(mut f: impl FnMut(&mut Frame, &Pointer, usize) -> bool) {
                     did_update = true;
                 } else {
                     pointer.is_down = false;
+                    points.clear();
                 }
             }
         } else if code_a == EV_ABS {

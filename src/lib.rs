@@ -15,8 +15,8 @@ const ABS_MT_TRACKING_ID: u32 = 57;
 const SYN: u32 = 0;
 const BUTTON_LEFT: u32 = 330;
 
-const INPUT_WIDTH: f32 = 719.0;
-const INPUT_HEIGHT: f32 = 1439.0;
+const INPUT_WIDTH: f32 = 800.;
+const INPUT_HEIGHT: f32 = 480.;
 
 pub struct Pointer {
     pub is_down: bool,
@@ -53,7 +53,7 @@ impl Frame {
 pub fn run(mut f: impl FnMut(&mut Frame, &Pointer, usize) -> bool) {
     let device = OpenOptions::new()
         .read(true)
-        .open("/dev/input/event3")
+        .open("/dev/input/event0")
         .unwrap();
     let mut framebuffer = Framebuffer::new("/dev/fb0").unwrap();
     let mut pointer = Pointer {
@@ -89,15 +89,15 @@ pub fn run(mut f: impl FnMut(&mut Frame, &Pointer, usize) -> bool) {
     }
 
     loop {
-        let mut b = (&device).take(24).into_inner();
+        let mut b = (&device).take(16).into_inner();
         b.read(&mut buffer);
 
-        let code_a = (buffer[17] as u32) << 8 | buffer[16] as u32;
-        let code_b = (buffer[19] as u32) << 8 | buffer[18] as u32;
-        let value = (buffer[23] as u32) << 24
-            | (buffer[22] as u32) << 16
-            | (buffer[21] as u32) << 8
-            | (buffer[20] as u32);
+        let code_a = (buffer[9] as u32) << 8 | buffer[8] as u32;
+        let code_b = (buffer[11] as u32) << 8 | buffer[10] as u32;
+        let value = (buffer[15] as u32) << 24
+            | (buffer[14] as u32) << 16
+            | (buffer[13] as u32) << 8
+            | (buffer[12] as u32);
         let mut did_update = false;
         if code_a == EV_KEY {
             if code_b == BUTTON_LEFT {

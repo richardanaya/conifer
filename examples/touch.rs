@@ -1,7 +1,7 @@
 fn main() {
     conifer::run(|frame, pointer, delta_time| {
-        if pointer.y > 1350 {
-            // exit if we touch bottom of screen
+        if pointer.x > 750 {
+            // exit if we touch right of the screen
             return true;
         }
         if pointer.is_down {

@@ -1,3 +1,5 @@
+use evdev::Device;
+
 use framebuffer::{Framebuffer, KdMode};
 use std::fs::{File, OpenOptions};
 use std::io::Read;
@@ -22,48 +24,6 @@ pub struct Pointer {
     pub is_down: bool,
     pub x: usize,
     pub y: usize,
-}
-
-#[derive(Debug)]
-struct InputEvent32 {
-    timeval_s: u32,
-    timeval_us: u32,
-    evtype: u16,
-    evcode: u16,
-    value: u32,
-}
-
-impl InputEvent32 {
-    pub fn from_bytes(bytes: [u8; 16]) -> Self {
-        InputEvent32 {
-            timeval_s: (bytes[3] as u32) << 24
-                | (bytes[2] as u32) << 16
-                | (bytes[1] as u32) << 8
-                | (bytes[0] as u32),
-            timeval_us: (bytes[7] as u32) << 24
-                | (bytes[6] as u32) << 16
-                | (bytes[5] as u32) << 8
-                | (bytes[4] as u32),
-            evtype: (bytes[9] as u16) << 8 | bytes[8] as u16,
-            evcode: (bytes[11] as u16) << 8 | bytes[10] as u16,
-            value: (bytes[15] as u32) << 24
-                | (bytes[14] as u32) << 16
-                | (bytes[13] as u32) << 8
-                | (bytes[12] as u32),
-        }
-    }
-
-    pub fn from_reader<R: Read>(reader: R) -> Self {
-        let mut buffer = [0; 16];
-        let mut b = reader.take(16).into_inner();
-        b.read(&mut buffer);
-
-        Self::from_bytes(buffer)
-    }
-
-    pub fn timeval(&self) -> String {
-        format!("{}.{}", self.timeval_s, self.timeval_us)
-    }
 }
 
 pub struct Frame {
@@ -99,17 +59,11 @@ enum StreamedCoord {
     Nothing,
 }
 
-pub enum TimevalSize {
-    B8,
-    B16,
-}
-
 pub struct Config {
-    input_device: File,
+    input_device: Device,
     framebuffer: Framebuffer,
     input_width: f32,
     input_height: f32,
-    timeval_size: TimevalSize,
 }
 
 impl Config {
@@ -118,12 +72,8 @@ impl Config {
         path_to_framebuffer: P,
         input_width: f32,
         input_height: f32,
-        timeval_size: TimevalSize,
     ) -> Self {
-        let device = OpenOptions::new()
-            .read(true)
-            .open(path_to_input_device)
-            .unwrap();
+        let device = Device::open(&path_to_input_device).unwrap();
         let mut framebuffer = Framebuffer::new(path_to_framebuffer).unwrap();
 
         Config {
@@ -131,7 +81,6 @@ impl Config {
             framebuffer: framebuffer,
             input_width,
             input_height,
-            timeval_size,
         }
     }
 
@@ -170,98 +119,98 @@ impl Config {
 
         let mut points: HashMap<String, StreamedCoord> = HashMap::new();
 
-        loop {
-            let input_event = InputEvent32::from_reader(&self.input_device);
-            let timeval = input_event.timeval();
+        'outer: loop {
+            for ev in self.input_device.events_no_sync().unwrap() {
+                println!("{:?}", ev);
 
-            let mut did_update = false;
-            if input_event.evtype == EV_KEY {
-                if input_event.evcode == BUTTON_LEFT {
-                    if input_event.value == 1 {
-                        pointer.is_down = true;
-                        did_update = true;
-                    } else {
-                        pointer.is_down = false;
-                        points.clear();
+                let timeval = format!("{}.{}", ev.time.tv_sec, ev.time.tv_usec);
+
+                let mut did_update = false;
+                if ev._type == EV_KEY {
+                    if ev.code == BUTTON_LEFT {
+                        if ev.value == 1 {
+                            pointer.is_down = true;
+                            did_update = true;
+                        } else {
+                            pointer.is_down = false;
+                            points.clear();
+                        }
                     }
-                }
-            } else if input_event.evtype == EV_ABS {
-                if input_event.evcode == ABS_X {
-                    println!(
-                        "{} {} {} {} ",
-                        input_event.value,
-                        self.input_width,
-                        w,
-                        (input_event.value as f32 / self.input_width * w as f32) as usize
-                    );
-                    if let Some(thing) = points.get(&timeval) {
-                        match thing {
-                            StreamedCoord::Y(y) => points.insert(
-                                timeval.clone(),
-                                StreamedCoord::XY(
-                                    (input_event.value as f32 / self.input_width * w as f32)
-                                        as usize,
-                                    *y,
-                                ),
-                            ),
-                            _ => None,
-                        };
-                    } else {
-                        points.insert(
-                            timeval.clone(),
-                            StreamedCoord::X(
-                                (input_event.value as f32 / self.input_width * w as f32) as usize,
-                            ),
+                } else if ev._type == EV_ABS {
+                    if ev.code == ABS_X {
+                        println!(
+                            "{} {} {} {} ",
+                            ev.value,
+                            self.input_width,
+                            w,
+                            (ev.value as f32 / self.input_width * w as f32) as usize
                         );
-                    }
-                } else if input_event.evcode == ABS_Y {
-                    println!(
-                        "{} {} {} {} ",
-                        input_event.value,
-                        self.input_height,
-                        h,
-                        (input_event.value as f32 / self.input_height * h as f32) as usize
-                    );
-
-                    if let Some(thing) = points.get(&timeval) {
-                        match thing {
-                            StreamedCoord::X(x) => points.insert(
-                                timeval.clone(),
-                                StreamedCoord::XY(
-                                    *x,
-                                    (input_event.value as f32 / self.input_height * h as f32)
-                                        as usize,
+                        if let Some(thing) = points.get(&timeval) {
+                            match thing {
+                                StreamedCoord::Y(y) => points.insert(
+                                    timeval.clone(),
+                                    StreamedCoord::XY(
+                                        (ev.value as f32 / self.input_width * w as f32) as usize,
+                                        *y,
+                                    ),
                                 ),
-                            ),
-                            _ => (None),
-                        };
-                    } else {
-                        points.insert(
-                            timeval.clone(),
-                            StreamedCoord::Y(
-                                (input_event.value as f32 / self.input_height * h as f32) as usize,
-                            ),
+                                _ => None,
+                            };
+                        } else {
+                            points.insert(
+                                timeval.clone(),
+                                StreamedCoord::X(
+                                    (ev.value as f32 / self.input_width * w as f32) as usize,
+                                ),
+                            );
+                        }
+                    } else if ev.code == ABS_Y {
+                        println!(
+                            "{} {} {} {} ",
+                            ev.value,
+                            self.input_height,
+                            h,
+                            (ev.value as f32 / self.input_height * h as f32) as usize
                         );
-                    }
-                }
-            } else if input_event.evtype == SYN {
-            }
 
-            let t = start.elapsed().as_millis() as usize;
-            let delta_t = t - last_t;
-            last_t = t;
-            let mut exit = false;
-            if let Some(StreamedCoord::XY(x, y)) = points.get(&timeval) {
-                pointer.x = *x;
-                pointer.y = *y;
-                exit = f(&mut frame, &mut pointer, delta_t);
-            }
-            let _ = self.framebuffer.write_frame(&frame.pixels);
-            if exit {
-                break;
+                        if let Some(thing) = points.get(&timeval) {
+                            match thing {
+                                StreamedCoord::X(x) => points.insert(
+                                    timeval.clone(),
+                                    StreamedCoord::XY(
+                                        *x,
+                                        (ev.value as f32 / self.input_height * h as f32) as usize,
+                                    ),
+                                ),
+                                _ => (None),
+                            };
+                        } else {
+                            points.insert(
+                                timeval.clone(),
+                                StreamedCoord::Y(
+                                    (ev.value as f32 / self.input_height * h as f32) as usize,
+                                ),
+                            );
+                        }
+                    }
+                } else if ev._type == SYN {
+                }
+
+                let t = start.elapsed().as_millis() as usize;
+                let delta_t = t - last_t;
+                last_t = t;
+                let mut exit = false;
+                if let Some(StreamedCoord::XY(x, y)) = points.get(&timeval) {
+                    pointer.x = *x;
+                    pointer.y = *y;
+                    exit = f(&mut frame, &mut pointer, delta_t);
+                }
+                let _ = self.framebuffer.write_frame(&frame.pixels);
+                if exit {
+                    break 'outer;
+                }
             }
         }
-
         let _ = Framebuffer::set_kd_mode(KdMode::Text).unwrap();
     }
 }

@@ -1,7 +1,8 @@
-use conifer::{Config, TimevalSize};
+use conifer::Config;
+use evdev::Device;
 
 fn main() {
-    let mut rpi4 = Config::new("/dev/input/event0", "/dev/fb0", 800., 480., TimevalSize::B8);
+    let mut rpi4 = Config::new("/dev/input/event0", "/dev/fb0", 800., 480.);
 
     rpi4.run(|frame, pointer, delta_time| {
         if pointer.x > 750 {

@@ -3,9 +3,14 @@ name = "conifer"
 version = "0.0.0"
 authors = ["Richard <Richard>"]
 edition = "2018"
+description = "A library for interacting with a touch screen device without X11"
+license = "MIT OR Apache-2.0"
+categories = ["cli"]
+repository = "https://github.com/richardanaya/conifer"
+readme="README.md"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-evdev = "0.10.1"
 framebuffer = "0.1"
+evdev = "0.10"

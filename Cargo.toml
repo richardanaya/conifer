@@ -14,3 +14,4 @@ readme="README.md"
 [dependencies]
 framebuffer = "0.1"
 evdev = "0.10"
+libc = "*"

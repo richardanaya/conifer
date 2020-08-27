@@ -4,14 +4,13 @@ use framebuffer::{Framebuffer, KdMode};
 use std::path::Path;
 use std::time::Instant;
 
-use std::collections::HashMap;
-
 mod point;
 mod streamed_data;
+mod swipe;
 
-use crate::point::StreamedPoint;
 use crate::point::*;
 use crate::streamed_data::*;
+use crate::swipe::*;
 
 const EV_KEY: u16 = 1;
 const EV_ABS: u16 = 3;
@@ -23,7 +22,7 @@ const ABS_MT_POSITION_X: u16 = 53;
 const ABS_MT_POSITION_Y: u16 = 54;
 const ABS_MT_TRACKING_ID: u16 = 57;
 const SYN: u16 = 0;
-const BUTTON_LEFT: u16 = 330;
+const BTN_TOUCH: u16 = 330;
 
 pub struct Frame {
     pub width: usize,
@@ -76,7 +75,7 @@ impl Config {
         }
     }
 
-    pub fn run(&mut self, mut f: impl FnMut(&mut Frame, Option<&Point>, usize) -> bool) {
+    pub fn run(&mut self, mut f: impl FnMut(&mut Frame, Option<&Swipe>, usize) -> bool) {
         let start = Instant::now();
         let mut last_t = 0 as usize;
 
@@ -92,7 +91,6 @@ impl Config {
         };
 
         let _ = Framebuffer::set_kd_mode(KdMode::Graphics).unwrap();
-        let mut buffer = [0; 24];
 
         let t = start.elapsed().as_millis() as usize;
         let delta_t = t - last_t;
@@ -104,35 +102,44 @@ impl Config {
             return;
         }
 
-        let mut points: HashMap<String, StreamedPoint> = HashMap::new();
-
-        let mut mem = StreamedPoint::Nothing;
+        let mut swipe_mem = StreamedSwipe {
+            swipe: None,
+            streamed_point: StreamedPoint::Nothing,
+        };
 
         'outer: loop {
             for ev in self.input_device.events_no_sync().unwrap() {
                 let stream = match (ev._type, ev.code, ev.value) {
-                    (EV_ABS, ABS_X, x) => {
-                        mem.update(StreamedPoint::X(Timeval::from_timeval(ev.time), x as usize))
-                    }
-                    (EV_ABS, ABS_Y, y) => {
-                        mem.update(StreamedPoint::Y(Timeval::from_timeval(ev.time), y as usize))
-                    }
-                    _ => StreamedState::Incomplete(mem),
+                    (EV_ABS, ABS_X, x) => swipe_mem.update(SwipeFragment::PointFragment(
+                        PointFragment::X(Timeval::from_timeval(ev.time), x as usize),
+                    )),
+                    (EV_ABS, ABS_Y, y) => swipe_mem.update(SwipeFragment::PointFragment(
+                        PointFragment::Y(Timeval::from_timeval(ev.time), y as usize),
+                    )),
+                    (EV_KEY, BTN_TOUCH, 0) => swipe_mem.update(SwipeFragment::End),
+                    _ => StreamedState::Incomplete(swipe_mem),
                 };
 
-                exit = false;
                 let t = start.elapsed().as_millis() as usize;
                 let delta_t = t - last_t;
                 last_t = t;
 
                 match stream {
-                    StreamedState::Complete(point) => {
-                        mem = StreamedPoint::Nothing;
-                        exit = f(&mut frame, Some(&point), delta_t);
+                    StreamedState::Complete(swipe) => {
+                        swipe_mem = StreamedSwipe::default();
+                        exit = f(&mut frame, Some(&swipe), delta_t)
                     }
-                    StreamedState::Incomplete(incomplete_point) => {
-                        mem = incomplete_point;
-                        exit = f(&mut frame, None, delta_t);
+                    StreamedState::Standalone(swipe) => {
+                        swipe_mem = StreamedSwipe {
+                            swipe: Some(swipe.clone()),
+                            streamed_point: StreamedPoint::Nothing,
+                        };
+
+                        exit = f(&mut frame, Some(&swipe), delta_t);
+                    }
+                    StreamedState::Incomplete(incomplete_swipe) => {
+                        swipe_mem = incomplete_swipe.clone();
+                        exit = f(&mut frame, incomplete_swipe.swipe.as_ref(), delta_t);
                     }
                 }
 

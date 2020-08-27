@@ -3,7 +3,7 @@ use crate::streamed_data::StreamedState;
 use crate::streamed_data::*;
 
 #[derive(Ord, PartialOrd, Eq, PartialEq, Debug, Copy, Clone)]
-pub struct Timeval(i32, i32);
+pub struct Timeval(pub i32, pub i32);
 
 impl Timeval {
     pub fn from_timeval(t: ::libc::timeval) -> Timeval {
@@ -11,19 +11,21 @@ impl Timeval {
     }
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct Point {
-    time: Timeval,
+    pub time: Timeval,
     pub x: usize,
     pub y: usize,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum StreamedPoint {
     X(Timeval, usize),
     Y(Timeval, usize),
     Nothing,
 }
+
+pub type PointFragment = StreamedPoint;
 
 impl Default for StreamedPoint {
     fn default() -> Self {
@@ -32,11 +34,7 @@ impl Default for StreamedPoint {
 }
 
 impl StreamedData<Point> for StreamedPoint {
-    type Fragment = StreamedPoint;
-
-    fn new() -> Self {
-        StreamedPoint::default()
-    }
+    type Fragment = PointFragment;
 
     fn update(self, fragment: Self::Fragment) -> StreamedState<Self, Point> {
         match (&self, &fragment) {

@@ -1,14 +1,16 @@
 #[derive(Debug)]
-pub enum StreamedState<I, D> {
+pub enum StreamedState<D> {
     Complete(D),
     Standalone(D),
-    Incomplete(I),
+    Incomplete,
 }
 
 pub trait StreamedData<D> {
     type Fragment;
 
-    fn update(self, fragment: Self::Fragment) -> StreamedState<Self, D>
+    fn reset(&mut self);
+
+    fn update(&mut self, fragment: Self::Fragment) -> StreamedState<D>
     where
         Self: Sized;
 }

@@ -70,32 +70,33 @@ impl Default for StreamedSwipe {
 impl StreamedData<Swipe> for StreamedSwipe {
     type Fragment = SwipeFragment;
 
-    fn update(self, fragment: Self::Fragment) -> StreamedState<Self, Swipe> {
+    fn reset(&mut self) {
+        (*self).swipe = None;
+        self.streamed_point = StreamedPoint::Nothing;
+    }
+
+    fn update(&mut self, fragment: Self::Fragment) -> StreamedState<Swipe> {
         match fragment {
-            SwipeFragment::PointFragment(ptfrag) => {
-                match self.streamed_point.clone().update(ptfrag) {
-                    StreamedState::Complete(pt) | StreamedState::Standalone(pt) => {
-                        if let Some(swipe) = self.swipe {
-                            let mut updated_swipe = swipe.clone();
-                            updated_swipe.push(pt);
-                            StreamedState::Standalone(updated_swipe)
-                        } else {
-                            StreamedState::Standalone(Swipe::new(pt))
-                        }
+            SwipeFragment::PointFragment(ptfrag) => match self.streamed_point.update(ptfrag) {
+                StreamedState::Complete(pt) | StreamedState::Standalone(pt) => {
+                    if let Some(updated_swipe) = self.swipe.as_mut() {
+                        updated_swipe.push(pt);
+                        StreamedState::Standalone(updated_swipe.clone())
+                    } else {
+                        (*self).swipe = Some(Swipe::new(pt));
+                        StreamedState::Standalone(self.swipe.clone().unwrap())
                     }
-                    StreamedState::Incomplete(ipt) => StreamedState::Incomplete(StreamedSwipe {
-                        swipe: self.swipe.clone(),
-                        streamed_point: ipt,
-                    }),
                 }
-            }
+                StreamedState::Incomplete => StreamedState::Incomplete,
+            },
             SwipeFragment::End => {
-                if let Some(swipe) = self.swipe {
-                    let mut updated_swipe = swipe.clone();
+                if let Some(updated_swipe) = self.swipe.as_mut() {
                     updated_swipe.end();
-                    StreamedState::Complete(updated_swipe)
+                    let complete_swipe = updated_swipe.clone();
+                    self.reset();
+                    StreamedState::Complete(complete_swipe)
                 } else {
-                    StreamedState::Incomplete(StreamedSwipe::default())
+                    StreamedState::Incomplete
                 }
             }
         }

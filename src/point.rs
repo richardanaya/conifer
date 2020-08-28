@@ -18,7 +18,7 @@ pub struct Point {
     pub y: usize,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Copy, Clone)]
 pub enum StreamedPoint {
     X(Timeval, usize),
     Y(Timeval, usize),
@@ -36,18 +36,27 @@ impl Default for StreamedPoint {
 impl StreamedData<Point> for StreamedPoint {
     type Fragment = PointFragment;
 
-    fn update(self, fragment: Self::Fragment) -> StreamedState<Self, Point> {
+    fn reset(&mut self) {
+        *self = StreamedPoint::Nothing;
+    }
+
+    fn update(&mut self, fragment: Self::Fragment) -> StreamedState<Point> {
         match (&self, &fragment) {
-            (&StreamedPoint::X(timex, x), &StreamedPoint::Y(timey, y))
-            | (&StreamedPoint::Y(timey, y), &StreamedPoint::X(timex, x)) => {
+            (&&mut StreamedPoint::X(timex, x), &StreamedPoint::Y(timey, y))
+            | (&&mut StreamedPoint::Y(timey, y), &StreamedPoint::X(timex, x)) => {
                 if timex == timey {
+                    self.reset();
                     StreamedState::Complete(Point { time: timex, x, y })
                 } else {
-                    StreamedState::Incomplete(fragment)
+                    *self = fragment;
+                    StreamedState::Incomplete
                 }
             }
-            (_, &StreamedPoint::Nothing) => StreamedState::Incomplete(self),
-            _ => StreamedState::Incomplete(fragment),
+            (_, StreamedPoint::Nothing) => StreamedState::Incomplete,
+            _ => {
+                *self = fragment;
+                StreamedState::Incomplete
+            }
         }
     }
 }

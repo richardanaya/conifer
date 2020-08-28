@@ -117,30 +117,15 @@ impl Config {
                         PointFragment::Y(Timeval::from_timeval(ev.time), y as usize),
                     )),
                     (EV_KEY, BTN_TOUCH, 0) => swipe_mem.update(SwipeFragment::End),
-                    _ => StreamedState::Incomplete(swipe_mem),
+                    _ => StreamedState::Incomplete,
                 };
 
                 let t = start.elapsed().as_millis() as usize;
                 let delta_t = t - last_t;
                 last_t = t;
 
-                match stream {
-                    StreamedState::Complete(swipe) => {
-                        swipe_mem = StreamedSwipe::default();
-                        exit = f(&mut frame, Some(&swipe), delta_t)
-                    }
-                    StreamedState::Standalone(swipe) => {
-                        swipe_mem = StreamedSwipe {
-                            swipe: Some(swipe.clone()),
-                            streamed_point: StreamedPoint::Nothing,
-                        };
-
-                        exit = f(&mut frame, Some(&swipe), delta_t);
-                    }
-                    StreamedState::Incomplete(incomplete_swipe) => {
-                        swipe_mem = incomplete_swipe.clone();
-                        exit = f(&mut frame, incomplete_swipe.swipe.as_ref(), delta_t);
-                    }
+                if let StreamedState::Complete(swipe) | StreamedState::Standalone(swipe) = stream {
+                    exit = f(&mut frame, Some(&swipe), delta_t);
                 }
 
                 let _ = self.framebuffer.write_frame(&frame.pixels);

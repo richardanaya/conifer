@@ -56,16 +56,20 @@ impl Frame {
 pub struct Config {
     input_device: Device,
     framebuffer: Framebuffer,
-    input_width: f32,
-    input_height: f32,
+    input_min_width: f32,
+    input_min_height: f32,
+    input_max_width: f32,
+    input_max_height: f32,
 }
 
 impl Config {
     pub fn new<P: AsRef<Path>>(
         path_to_input_device: P,
         path_to_framebuffer: P,
-        input_width: f32,
-        input_height: f32,
+        input_min_width: f32,
+        input_min_height: f32,
+        input_max_width: f32,
+        input_max_height: f32,
     ) -> Self {
         let device = Device::open(&path_to_input_device).unwrap();
         let framebuffer = Framebuffer::new(path_to_framebuffer).unwrap();
@@ -73,8 +77,10 @@ impl Config {
         Config {
             input_device: device,
             framebuffer: framebuffer,
-            input_width,
-            input_height,
+            input_min_width,
+            input_min_height,
+            input_max_width,
+            input_max_height,
         }
     }
 
@@ -100,8 +106,10 @@ impl Config {
                     return Ok(Config {
                         input_device: d,
                         framebuffer: framebuffer,
-                        input_width: x_abs_val.maximum as f32,
-                        input_height: y_abs_val.maximum as f32,
+                        input_min_width: x_abs_val.minimum as f32,
+                        input_min_height: y_abs_val.minimum as f32,
+                        input_max_width: x_abs_val.maximum as f32,
+                        input_max_height: y_abs_val.maximum as f32,
                     });
                 }
             }

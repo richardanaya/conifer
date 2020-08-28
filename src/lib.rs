@@ -53,6 +53,7 @@ impl Frame {
     }
 }
 
+#[derive(Debug)]
 pub struct Config {
     input_device: Device,
     framebuffer: Framebuffer,

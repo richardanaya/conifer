@@ -52,7 +52,7 @@ impl Frame {
         self.pixels[curr_index + 2] = b;
     }
 
-    pub fn plot_ine(&mut self, point0: Point, point1: Point) {
+    pub fn plot_line(&mut self, point0: Point, point1: Point) {
         let mut x0 = point0.x as isize;
         let mut y0 = point0.y as isize;
         let x1 = point1.x as isize;

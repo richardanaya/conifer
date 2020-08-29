@@ -16,6 +16,7 @@ framebuffer = "0.2"
 evdev = "0.10"
 libc = "*"
 rand = "0"
+image = "0.23"
 
 [dev-dependencies]
 env_logger = "*"

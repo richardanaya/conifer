@@ -1,4 +1,5 @@
 use crate::point::Point;
+use std::error::Error;
 
 pub struct Frame {
     pub width: usize,
@@ -9,6 +10,18 @@ pub struct Frame {
 }
 
 impl Frame {
+    pub fn new(width:usize, height:usize, pixels: &[u8])-> Result<Self,Box<dyn Error>> {
+        let bytespp = pixels.len() / (width*height);
+        let line_length = bytespp * width;
+        Ok(Frame {
+            pixels:pixels.to_owned(),
+            width,
+            height,
+            line_length,
+            bytespp,
+        })
+    }
+    
     pub fn get_pixel(&mut self, x: usize, y: usize) -> (u8, u8, u8) {
         let curr_index = y * self.line_length + x * self.bytespp;
         (
@@ -23,6 +36,26 @@ impl Frame {
         self.pixels[curr_index] = r;
         self.pixels[curr_index + 1] = g;
         self.pixels[curr_index + 2] = b;
+    }
+
+    pub fn draw_frame(&mut self, x: usize, y: usize, frame: &Frame) -> Result<(),&'static str>{
+        if self.bytespp != frame.bytespp {
+            return Err("cannot draw frame due to incompatible bits per pixel")
+        }
+        let r_width = usize::min(x+frame.width,self.width)-x;
+        let r_height = usize::min(y+frame.height,self.height)-y;
+        for rx in 0..r_width {
+            for ry in 0..r_height {
+                let x = x+rx;
+                let y = y+rx;
+                let curr_index = y * self.line_length + x * self.bytespp;
+                let r_index = ry * frame.line_length + rx * frame.bytespp;
+                self.pixels[curr_index] = self.pixels[r_index];
+                self.pixels[curr_index + 1] = self.pixels[r_index+1];
+                self.pixels[curr_index + 2] = self.pixels[r_index+2];
+            }
+        }
+        Ok(())
     }
 
     pub fn plot_line(&mut self, point0: Point, point1: Point) {

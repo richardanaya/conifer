@@ -2,22 +2,25 @@
 
 <a href="https://docs.rs/conifer"><img src="https://img.shields.io/badge/docs-latest-blue.svg?style=flat-square" alt="docs.rs docs" /></a>
 
+A simple frame buffer game engine for PinePhone, Raspberry Pi, and other devices with touch screens.
+
+* Frame buffer ( no X11 required! )
+* Touch screen
+
 ```toml
 [dependencies]
 confier = "0.0"
 ```
 
+ Make sure your user is a part of `video` and `input` group
+
 ```bash
-# Make sure your user is a part of video and input group
 sudo addusr video richard 
 sudo addusr input richard
 # Logout and login
 ```
 
-A simple frame buffer game engine for PinePhone, Raspberry Pi, and other devices with touch screens.
-
-* Frame buffer ( no X11 required! )
-* Touch screen
+## Hello World
 
 ```rust
 use conifer::prelude::*;

@@ -1,6 +1,6 @@
 use crate::frame::Frame;
+use crate::framebuffer::Framebuffer;
 use evdev::{Device, ABSOLUTE};
-use framebuffer::{Framebuffer, KdMode};
 use std::error::Error;
 use std::path::Path;
 use std::time::Instant;
@@ -70,7 +70,7 @@ impl Config {
                         )
                     };
 
-                    let framebuffer = Framebuffer::new("/dev/fb0").unwrap();
+                    let framebuffer = Framebuffer::auto().unwrap();
 
                     return Ok(Config {
                         input_device: d,
@@ -93,25 +93,25 @@ impl Config {
         let start = Instant::now();
         let mut last_t = 0 as usize;
 
-        let w = self.framebuffer.var_screen_info.xres as usize;
-        let h = self.framebuffer.var_screen_info.yres as usize;
-        let line_length = self.framebuffer.fix_screen_info.line_length as usize;
+        let w = self.framebuffer.width();
+        let h = self.framebuffer.height();
+        let line_length = self.framebuffer.line_length();
         let mut frame = Frame {
             width: w,
             height: h,
             line_length,
-            bytespp: (self.framebuffer.var_screen_info.bits_per_pixel / 8) as usize,
+            bytespp: self.framebuffer.bytes_per_pixel(),
             pixels: vec![0u8; line_length * h],
         };
 
-        let _ = Framebuffer::set_kd_mode(KdMode::Graphics).unwrap();
+        self.framebuffer.setup();
 
         let t = start.elapsed().as_millis() as usize;
         let delta_t = t - last_t;
         last_t = t;
 
         let mut run_response = f(&mut frame, None, delta_t);
-        let _ = self.framebuffer.write_frame(&frame.pixels);
+        self.framebuffer.write_frame(&frame.pixels);
         if let Ok(RunResponse::Exit) = run_response {
             return;
         }
@@ -149,6 +149,6 @@ impl Config {
                 }
             }
         }
-        let _ = Framebuffer::set_kd_mode(KdMode::Text).unwrap();
+        self.framebuffer.shutdown();
     }
 }

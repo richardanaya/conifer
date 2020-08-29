@@ -20,7 +20,7 @@ fn main() {
             debug!("{:?}", swipe.drag());
             if let Some(Gesture::Drag(point0, point1)) = swipe.drag() {
                 debug!("Draw line");
-                frame.plotLine(point0, point1);
+                frame.plot_line(point0, point1);
             }
         }
         Ok(RunResponse::Draw)

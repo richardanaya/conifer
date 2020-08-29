@@ -6,7 +6,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         if let Some(s) = swipe {
             return Ok(RunResponse::Exit);
         }
-        // if the user swiped, exit
+        // let's draw some images randomly
         for _ in 0..100 {
             frame.draw_frame(
                 &img_pine,
@@ -14,7 +14,6 @@ fn main() -> Result<(), Box<dyn Error>> {
                 (random() * frame.width as f32) as isize - img_pine.height as isize / 2,
             )?;
         }
-        // let conifer know we want to push framebuffer pixels to screen
         Ok(RunResponse::Draw)
     });
     Ok(())

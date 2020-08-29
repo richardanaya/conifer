@@ -4,9 +4,14 @@
 
 A simple frame buffer game engine for PinePhone, Raspberry Pi, and other devices with touch screens.
 
-* auto detect virtual terminal framebuffer
-* auto detect touch screen input
-* image support
+- [x] make games without X11!
+- [x] auto detect virtual terminal framebuffer
+- [x] auto detect touch screen input
+- [x] image support
+- [ ] layers
+- [ ] text drawing
+- [ ] sprites
+- [ ] sound
 
 ```toml
 [dependencies]

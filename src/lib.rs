@@ -4,9 +4,10 @@ use framebuffer::{Framebuffer, KdMode};
 use std::path::Path;
 use std::time::Instant;
 
-mod point;
-mod streamed_data;
-mod swipe;
+pub mod gesture;
+pub mod point;
+pub mod streamed_data;
+pub mod swipe;
 
 use crate::point::*;
 use crate::streamed_data::*;
@@ -47,6 +48,36 @@ impl Frame {
         self.pixels[curr_index] = r;
         self.pixels[curr_index + 1] = g;
         self.pixels[curr_index + 2] = b;
+    }
+
+    pub fn plotLine(&mut self, point0: Point, point1: Point) {
+        let mut x0 = point0.x as isize;
+        let mut x1 = point1.x as isize;
+        let mut y0 = point0.y as isize;
+        let mut y1 = point1.y as isize;
+        let mut dx = (x1 - x0).abs();
+        let mut sx = if x0 < x1 { 1 } else { -1 };
+        let mut dy = -(y1 - y0).abs();
+        let mut sy = if y0 < y1 { 1 } else { -1 };
+        let mut err = dx + dy; /* error value e_xy */
+        loop {
+            /* loop */
+            self.set_pixel(x0 as usize, y0 as usize, 255, 255, 255);
+            if (x0 == x1 && y0 == y1) {
+                break;
+            }
+            let e2 = 2 * err;
+            if (e2 >= dy) {
+                /* e_xy+e_x > 0 */
+                err += dy;
+                x0 += sx;
+            }
+            if (e2 <= dx) {
+                /* e_xy+e_y < 0 */
+                err += dx;
+                y0 += sy;
+            }
+        }
     }
 }
 
@@ -111,10 +142,10 @@ impl Config {
             for ev in self.input_device.events_no_sync().unwrap() {
                 let stream = match (ev._type, ev.code, ev.value) {
                     (EV_ABS, ABS_X, x) => swipe_mem.update(SwipeFragment::PointFragment(
-                        PointFragment::X(Timeval::from_timeval(ev.time), x as usize),
+                        PointFragment::X(Timeval::from_timeval(ev.time), x as isize),
                     )),
                     (EV_ABS, ABS_Y, y) => swipe_mem.update(SwipeFragment::PointFragment(
-                        PointFragment::Y(Timeval::from_timeval(ev.time), y as usize),
+                        PointFragment::Y(Timeval::from_timeval(ev.time), y as isize),
                     )),
                     (EV_KEY, BTN_TOUCH, 0) => swipe_mem.update(SwipeFragment::End),
                     _ => StreamedState::Incomplete,

@@ -31,9 +31,12 @@ impl Swipe {
         &self.points[self.points.len() - 1]
     }
 
-    pub fn vector(&self) -> (usize, usize) {
+    pub fn vector(&self) -> (isize, isize) {
         let (first, last) = (&self.points[0], self.last());
-        (last.x - first.x, last.y - first.y)
+        (
+            last.x as isize - first.x as isize,
+            last.y as isize - first.y as isize,
+        )
     }
 
     // overkill? use floats for Timeval?

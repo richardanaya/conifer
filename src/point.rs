@@ -14,14 +14,14 @@ impl Timeval {
 #[derive(Clone, Debug)]
 pub struct Point {
     pub time: Timeval,
-    pub x: usize,
-    pub y: usize,
+    pub x: isize,
+    pub y: isize,
 }
 
 #[derive(Debug, Copy, Clone)]
 pub enum StreamedPoint {
-    X(Timeval, usize),
-    Y(Timeval, usize),
+    X(Timeval, isize),
+    Y(Timeval, isize),
     Nothing,
 }
 

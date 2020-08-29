@@ -83,6 +83,11 @@ impl Config {
         last_t = t;
 
         let mut run_response = f(&mut frame, None, delta_t);
+        if let Err(err) = run_response {
+            fb.shutdown();
+            eprintln!("Error occured in user run loop: {}", err);
+            std::process::exit(0);
+        }
         fb.write_frame(&frame.pixels);
         if let Ok(RunResponse::Exit) = run_response {
             fb.shutdown();
@@ -112,6 +117,11 @@ impl Config {
 
             if let StreamedState::Complete(swipe) | StreamedState::Standalone(swipe) = stream {
                 run_response = f(&mut frame, Some(&swipe), delta_t);
+            }
+            if let Err(err) = &run_response {
+                fb.shutdown();
+                eprintln!("Error occured in user run loop: {}", err);
+                std::process::exit(0);
             }
 
             if let Ok(RunResponse::Draw) = run_response {

@@ -1,5 +1,4 @@
-use conifer::Config;
-use evdev::Device;
+use conifer::prelude::*;
 
 fn main() {
     let mut d = Config::auto().unwrap();
@@ -9,7 +8,7 @@ fn main() {
             let points = swipe.points.clone();
             if points.iter().any(|p| p.x > 750) {
                 // exit if we touch right of the screen
-                return true;
+                return Ok(RunResponse::Exit);
             }
             // draw a swipe red when it's finished, white when ongoing
             for p in points.iter() {
@@ -20,6 +19,6 @@ fn main() {
                 }
             }
         }
-        false
+        Ok(RunResponse::Draw)
     })
 }

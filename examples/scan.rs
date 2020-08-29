@@ -2,5 +2,5 @@ use conifer::*;
 
 fn main() {
     let c = Config::auto();
-    println!("{:#?}",c);
+    println!("{:#?}", c);
 }

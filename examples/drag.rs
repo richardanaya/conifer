@@ -1,6 +1,4 @@
-use conifer::gesture::*;
-use conifer::swipe::*;
-use conifer::Config;
+use conifer::prelude::*;
 
 use env_logger::init;
 use log::{debug, info, warn};
@@ -17,7 +15,7 @@ fn main() {
             let points = swipe.points.clone();
             if points.iter().any(|p| p.x > 750) {
                 // exit if we touch right of the screen
-                return true;
+                return Ok(RunResponse::Exit);
             }
             debug!("{:?}", swipe.drag());
             if let Some(Gesture::Drag(point0, point1)) = swipe.drag() {
@@ -25,6 +23,6 @@ fn main() {
                 frame.plotLine(point0, point1);
             }
         }
-        false
+        Ok(RunResponse::Draw)
     })
 }

@@ -1,13 +1,13 @@
 use evdev::{Device, ABSOLUTE};
 
 use framebuffer::{Framebuffer, KdMode};
-use std::fs::File;
-use std::os::unix::io::FromRawFd;
+use std::error::Error;
 use std::path::Path;
 use std::time::Instant;
 
 pub mod gesture;
 pub mod point;
+pub mod prelude;
 pub mod streamed_data;
 pub mod swipe;
 
@@ -17,14 +17,8 @@ use crate::swipe::*;
 
 const EV_KEY: u16 = 1;
 const EV_ABS: u16 = 3;
-const EV_MSC: u16 = 4;
 const ABS_X: u16 = 0;
 const ABS_Y: u16 = 1;
-const ABS_MT_SLOT: u16 = 47;
-const ABS_MT_POSITION_X: u16 = 53;
-const ABS_MT_POSITION_Y: u16 = 54;
-const ABS_MT_TRACKING_ID: u16 = 57;
-const SYN: u16 = 0;
 const BTN_TOUCH: u16 = 330;
 
 pub struct Frame {
@@ -33,6 +27,12 @@ pub struct Frame {
     pixels: Vec<u8>,
     line_length: usize,
     bytespp: usize,
+}
+
+pub enum RunResponse {
+    Exit,
+    NothingChanged,
+    Draw,
 }
 
 impl Frame {
@@ -52,29 +52,29 @@ impl Frame {
         self.pixels[curr_index + 2] = b;
     }
 
-    pub fn plotLine(&mut self, point0: Point, point1: Point) {
+    pub fn plot_ine(&mut self, point0: Point, point1: Point) {
         let mut x0 = point0.x as isize;
-        let mut x1 = point1.x as isize;
         let mut y0 = point0.y as isize;
-        let mut y1 = point1.y as isize;
-        let mut dx = (x1 - x0).abs();
-        let mut sx = if x0 < x1 { 1 } else { -1 };
-        let mut dy = -(y1 - y0).abs();
-        let mut sy = if y0 < y1 { 1 } else { -1 };
+        let x1 = point1.x as isize;
+        let y1 = point1.y as isize;
+        let dx = (x1 - x0).abs();
+        let sx = if x0 < x1 { 1 } else { -1 };
+        let dy = -(y1 - y0).abs();
+        let sy = if y0 < y1 { 1 } else { -1 };
         let mut err = dx + dy; /* error value e_xy */
         loop {
             /* loop */
             self.set_pixel(x0 as usize, y0 as usize, 255, 255, 255);
-            if (x0 == x1 && y0 == y1) {
+            if x0 == x1 && y0 == y1 {
                 break;
             }
             let e2 = 2 * err;
-            if (e2 >= dy) {
+            if e2 >= dy {
                 /* e_xy+e_x > 0 */
                 err += dy;
                 x0 += sx;
             }
-            if (e2 <= dx) {
+            if e2 <= dx {
                 /* e_xy+e_y < 0 */
                 err += dx;
                 y0 += sy;
@@ -148,7 +148,10 @@ impl Config {
         Err("could not automatically determine configuration")
     }
 
-    pub fn run(&mut self, mut f: impl FnMut(&mut Frame, Option<&Swipe>, usize) -> bool) {
+    pub fn run(
+        &mut self,
+        mut f: impl FnMut(&mut Frame, Option<&Swipe>, usize) -> Result<RunResponse, Box<dyn Error>>,
+    ) {
         let start = Instant::now();
         let mut last_t = 0 as usize;
 
@@ -169,9 +172,9 @@ impl Config {
         let delta_t = t - last_t;
         last_t = t;
 
-        let mut exit = f(&mut frame, None, delta_t);
+        let mut run_response = f(&mut frame, None, delta_t);
         let _ = self.framebuffer.write_frame(&frame.pixels);
-        if exit {
+        if let Ok(RunResponse::Exit) = run_response {
             return;
         }
 
@@ -198,11 +201,12 @@ impl Config {
                 last_t = t;
 
                 if let StreamedState::Complete(swipe) | StreamedState::Standalone(swipe) = stream {
-                    exit = f(&mut frame, Some(&swipe), delta_t);
+                    run_response = f(&mut frame, Some(&swipe), delta_t);
                 }
 
-                let _ = self.framebuffer.write_frame(&frame.pixels);
-                if exit {
+                if let Ok(RunResponse::Draw) = run_response {
+                    self.framebuffer.write_frame(&frame.pixels);
+                } else if let Ok(RunResponse::Exit) = run_response {
                     break 'outer;
                 }
             }

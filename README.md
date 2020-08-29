@@ -2,7 +2,7 @@
 
 <a href="https://docs.rs/conifer"><img src="https://img.shields.io/badge/docs-latest-blue.svg?style=flat-square" alt="docs.rs docs" /></a>
 
-```
+```bash
 # Make sure your user is a part of video and input group
 sudo addusr video richard 
 sudo addusr input richard

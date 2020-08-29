@@ -11,7 +11,7 @@ sudo addusr input richard
 cat /proc/bus/input/devices
 ```
 
-A simple frame buffer game engine for PinePhone, Raspberry Pi, and other .
+A simple frame buffer game engine for PinePhone, Raspberry Pi, and other devices with touch screens.
 
 * Frame buffer ( no X11 required! )
 * Touch screen

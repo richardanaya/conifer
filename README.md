@@ -2,7 +2,7 @@
 
 <a href="https://docs.rs/conifer"><img src="https://img.shields.io/badge/docs-latest-blue.svg?style=flat-square" alt="docs.rs docs" /></a>
 
-```
+```toml
 [dependencies]
 confier = "0.0"
 ```

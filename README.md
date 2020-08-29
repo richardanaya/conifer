@@ -9,7 +9,7 @@ A simple frame buffer game engine for PinePhone, Raspberry Pi, and other devices
 
 ```toml
 [dependencies]
-confier = "0.0"
+conifer = "0.0"
 ```
 
  Make sure your user is a part of `video` and `input` group

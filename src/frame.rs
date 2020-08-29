@@ -1,6 +1,7 @@
 use crate::point::Point;
 use std::error::Error;
 
+#[derive(Debug)]
 pub struct Frame {
     pub width: usize,
     pub height: usize,
@@ -39,20 +40,22 @@ impl Frame {
     }
 
     pub fn draw_frame(&mut self, frame: &Frame, x: usize, y: usize) -> Result<(), &'static str> {
-        if self.bytespp != frame.bytespp {
-            return Err("cannot draw frame due to incompatible bits per pixel");
-        }
+        //if self.bytespp != frame.bytespp {
+        //    return Err("cannot draw frame due to incompatible bits per pixel");
+        //}
         let r_width = usize::min(x + frame.width, self.width) - x;
         let r_height = usize::min(y + frame.height, self.height) - y;
         for rx in 0..r_width {
             for ry in 0..r_height {
                 let x = x + rx;
-                let y = y + rx;
-                let curr_index = y * self.line_length + x * self.bytespp;
-                let r_index = ry * frame.line_length + rx * frame.bytespp;
-                self.pixels[curr_index] = self.pixels[r_index];
-                self.pixels[curr_index + 1] = self.pixels[r_index + 1];
-                self.pixels[curr_index + 2] = self.pixels[r_index + 2];
+                let y = y + ry;
+                let curr_index = (y * self.width + x) * self.bytespp;
+                let r_index = (ry * frame.width + rx) * frame.bytespp;
+                if r_index+2 < frame.pixels.len() {
+                self.pixels[curr_index] = frame.pixels[r_index+2];
+                self.pixels[curr_index + 1] = frame.pixels[r_index + 1];
+                self.pixels[curr_index + 2] = frame.pixels[r_index ];
+                }
             }
         }
         Ok(())

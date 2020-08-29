@@ -1,6 +1,4 @@
-use conifer::gesture::*;
-use conifer::swipe::*;
-use conifer::Config;
+use conifer::prelude::*;
 
 use env_logger::init;
 use log::{debug, info, warn};
@@ -16,7 +14,7 @@ fn main() {
             debug!("New swipe");
             if swipe.points.iter().any(|p| p.x > 750) {
                 // exit if we touch right of the screen
-                return true;
+                return Ok(RunResponse::Exit);
             }
             debug!("{:?}", swipe.tap(20));
             if let Some(Gesture::Tap(point)) = swipe.tap(20) {
@@ -24,6 +22,6 @@ fn main() {
                 frame.set_pixel(point.x as usize, point.y as usize, 255, 255, 255);
             }
         }
-        false
+        Ok(RunResponse::Draw)
     })
 }

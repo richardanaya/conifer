@@ -1,13 +1,12 @@
 use crate::streamed_data::StreamedData;
 use crate::streamed_data::StreamedState;
-use crate::streamed_data::*;
 
 #[derive(Ord, PartialOrd, Eq, PartialEq, Debug, Copy, Clone)]
-pub struct Timeval(pub i32, pub i32);
+pub struct Timeval(pub isize, pub isize);
 
 impl Timeval {
     pub fn from_timeval(t: ::libc::timeval) -> Timeval {
-        Timeval(t.tv_sec, t.tv_usec)
+        Timeval(t.tv_sec as isize, t.tv_usec as isize)
     }
 }
 

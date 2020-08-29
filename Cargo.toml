@@ -12,7 +12,7 @@ readme="README.md"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-framebuffer = "0.1"
+framebuffer = "0.2"
 evdev = "0.10"
 libc = "*"
 

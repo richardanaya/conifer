@@ -1,12 +1,11 @@
-use conifer::*;
-use std::error::Error;
+use conifer::prelude::*;
 
 fn main() -> Result<(), Box<dyn Error>> {
     Config::auto()?.run(|frame, swipe, _delta_time| {
         for y in 0..frame.height {
             for x in 0..frame.width {
                 if swipe.is_some() {
-                    return true;
+                    return Ok(RunResponse::Exit);
                 }
                 frame.set_pixel(
                     x,
@@ -17,7 +16,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                 );
             }
         }
-        false
+        Ok(RunResponse::Draw)
     });
     Ok(())
 }

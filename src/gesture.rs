@@ -16,8 +16,8 @@ impl Swipe {
             self.points.iter().map(|p| p.y).min(),
             self.points.iter().map(|p| p.y).max(),
         ) {
-            if (maxx as isize - minx as isize <= spread as isize
-                && maxy as isize - miny as isize <= spread as isize)
+            if maxx as isize - minx as isize <= spread as isize
+                && maxy as isize - miny as isize <= spread as isize
             {
                 return Some((
                     (maxx as isize + minx as isize).div(2),
@@ -28,7 +28,7 @@ impl Swipe {
         None
     }
 
-    pub fn tap(&self, spread: usize) -> Option<Gesture> {
+    pub fn tap(&self, _spread: usize) -> Option<Gesture> {
         if self.finished {
             self.narrow_enough(20).and_then(|(x, y)| {
                 Some(Gesture::Tap(Point {

@@ -3,7 +3,7 @@ use conifer::prelude::*;
 fn main() -> Result<(), Box<dyn Error>> {
     let img_pine = load_image("examples/images/pine.png")?;
     Config::auto()?.run(|frame, swipe, _delta_time| {
-        if swipe.is_some() {
+        if let Some(s) = swipe {
             return Ok(RunResponse::Exit);
         }
         // if the user swiped, exit

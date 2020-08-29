@@ -1,6 +1,9 @@
-# Conifer
+# :evergreen_tree: Conifer
 
 ```
+
+<a href="https://docs.rs/conifer"><img src="https://img.shields.io/badge/docs-latest-blue.svg?style=flat-square" alt="docs.rs docs" /></a>
+
 # Make sure your user is a part of video and input group
 sudo addusr video richard 
 sudo addusr input richard
@@ -38,3 +41,20 @@ fn main() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 ```
+
+# License
+
+This project is licensed under either of
+
+ * Apache License, Version 2.0, ([LICENSE-APACHE](LICENSE-APACHE) or
+   http://www.apache.org/licenses/LICENSE-2.0)
+ * MIT license ([LICENSE-MIT](LICENSE-MIT) or
+   http://opensource.org/licenses/MIT)
+
+at your option.
+
+### Contribution
+
+Unless you explicitly state otherwise, any contribution intentionally submitted
+for inclusion in `conifer` by you, as defined in the Apache-2.0 license, shall be
+dual licensed as above, without any additional terms or conditions.

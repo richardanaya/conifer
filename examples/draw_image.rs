@@ -7,7 +7,13 @@ fn main() -> Result<(), Box<dyn Error>> {
             return Ok(RunResponse::Exit);
         }
         // if the user swiped, exit
-        frame.draw_frame(&img_pine, 50, 50)?;
+        for _ in 0..100 {
+            frame.draw_frame(
+                &img_pine,
+                (random() * frame.width as f32) as isize - img_pine.width as isize / 2,
+                (random() * frame.width as f32) as isize - img_pine.height as isize / 2,
+            )?;
+        }
         // let conifer know we want to push framebuffer pixels to screen
         Ok(RunResponse::Draw)
     });

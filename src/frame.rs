@@ -40,6 +40,7 @@ impl Frame {
     }
 
     pub fn draw_frame(&mut self, frame: &Frame, x: isize, y: isize) -> Result<(), &'static str> {
+        // TODO figure out if this matterns
         //if self.bytespp != frame.bytespp {
         //    return Err("cannot draw frame due to incompatible bits per pixel");
         //}
@@ -49,14 +50,15 @@ impl Frame {
             for ry in 0..r_height {
                 let x = x + rx;
                 let y = y + ry;
-                if x < 0 || y < 0{
+                // TODO do this mor efficiently
+                if x < 0 || y < 0 {
                     continue;
                 }
                 let curr_index = ((y * self.width as isize + x) * self.bytespp as isize) as usize;
                 let r_index = ((ry * frame.width as isize + rx) * frame.bytespp as isize) as usize;
-                self.pixels[curr_index] = frame.pixels[r_index+2];
+                self.pixels[curr_index] = frame.pixels[r_index + 2];
                 self.pixels[curr_index + 1] = frame.pixels[r_index + 1];
-                self.pixels[curr_index + 2] = frame.pixels[r_index ];
+                self.pixels[curr_index + 2] = frame.pixels[r_index];
             }
         }
         Ok(())

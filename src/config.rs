@@ -85,7 +85,8 @@ impl Config {
         let mut run_response = f(&mut frame, None, delta_t);
         fb.write_frame(&frame.pixels);
         if let Ok(RunResponse::Exit) = run_response {
-            return;
+            fb.shutdown();
+            std::process::exit(0);
         }
 
         let mut swipe_mem = StreamedSwipe {

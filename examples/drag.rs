@@ -8,9 +8,9 @@ use log::{debug, info, warn};
 fn main() {
     env_logger::init();
     info!("Starting");
-    let mut rpi4 = Config::new("/dev/input/event0", "/dev/fb0", 800., 480.);
+    let mut d = Config::auto().unwrap();
 
-    rpi4.run(|frame, swipe, delta_time| {
+    d.run(|frame, swipe, delta_time| {
         debug!("Enter callback");
         if let Some(swipe) = swipe {
             debug!("New swipe");

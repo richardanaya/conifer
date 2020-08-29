@@ -1,6 +1,8 @@
-use evdev::Device;
+use evdev::{Device, ABSOLUTE};
 
 use framebuffer::{Framebuffer, KdMode};
+use std::fs::File;
+use std::os::unix::io::FromRawFd;
 use std::path::Path;
 use std::time::Instant;
 
@@ -81,29 +83,69 @@ impl Frame {
     }
 }
 
+#[derive(Debug)]
 pub struct Config {
     input_device: Device,
     framebuffer: Framebuffer,
-    input_width: f32,
-    input_height: f32,
+    pub input_min_width: f32,
+    pub input_min_height: f32,
+    pub input_max_width: f32,
+    pub input_max_height: f32,
 }
 
 impl Config {
     pub fn new<P: AsRef<Path>>(
         path_to_input_device: P,
         path_to_framebuffer: P,
-        input_width: f32,
-        input_height: f32,
+        input_min_width: f32,
+        input_min_height: f32,
+        input_max_width: f32,
+        input_max_height: f32,
     ) -> Self {
         let device = Device::open(&path_to_input_device).unwrap();
-        let mut framebuffer = Framebuffer::new(path_to_framebuffer).unwrap();
+        let framebuffer = Framebuffer::new(path_to_framebuffer).unwrap();
 
         Config {
             input_device: device,
             framebuffer: framebuffer,
-            input_width,
-            input_height,
+            input_min_width,
+            input_min_height,
+            input_max_width,
+            input_max_height,
         }
+    }
+
+    pub fn auto() -> Result<Self, &'static str> {
+        let dev = evdev::enumerate();
+        // look through all the devices
+        for d in dev.into_iter() {
+            // if it supports absolute events
+            if d.events_supported().contains(ABSOLUTE) {
+                // if it supports x and y axis
+                let first_axis = 1 << 0;
+                if (d.absolute_axes_supported().bits() & first_axis) == 1 {
+                    let (x_abs_val, y_abs_val) = {
+                        let d_ref = &d;
+                        (
+                            d_ref.state().abs_vals[0 as usize],
+                            d_ref.state().abs_vals[1 as usize],
+                        )
+                    };
+
+                    let framebuffer = Framebuffer::new("/dev/fb0").unwrap();
+
+                    return Ok(Config {
+                        input_device: d,
+                        framebuffer: framebuffer,
+                        input_min_width: x_abs_val.minimum as f32,
+                        input_min_height: y_abs_val.minimum as f32,
+                        input_max_width: x_abs_val.maximum as f32,
+                        input_max_height: y_abs_val.maximum as f32,
+                    });
+                }
+            }
+        }
+        Err("could not automatically determine configuration")
     }
 
     pub fn run(&mut self, mut f: impl FnMut(&mut Frame, Option<&Swipe>, usize) -> bool) {

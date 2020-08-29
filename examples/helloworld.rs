@@ -1,8 +1,11 @@
-fn main() {
-    conifer::run(|frame, pointer, delta_time| {
+use conifer::*;
+use std::error::Error;
+
+fn main() -> Result<(), Box<dyn Error>> {
+    Config::auto()?.run(|frame, swipe, _delta_time| {
         for y in 0..frame.height {
             for x in 0..frame.width {
-                if pointer.is_down {
+                if swipe.is_some() {
                     return true;
                 }
                 frame.set_pixel(
@@ -15,5 +18,6 @@ fn main() {
             }
         }
         false
-    })
+    });
+    Ok(())
 }

@@ -1,9 +1,10 @@
 use conifer::Config;
+use evdev::Device;
 
 fn main() {
-    let mut rpi4 = Config::new("/dev/input/event0", "/dev/fb0", 800., 480.);
+    let mut d = Config::auto().unwrap();
 
-    rpi4.run(|frame, swipe, delta_time| {
+    d.run(|frame, swipe, delta_time| {
         if let Some(swipe) = swipe {
             let points = swipe.points.clone();
             if points.iter().any(|p| p.x > 750) {
@@ -13,9 +14,9 @@ fn main() {
             // draw a swipe red when it's finished, white when ongoing
             for p in points.iter() {
                 if swipe.finished {
-                    frame.set_pixel(p.x, p.y, 255, 255, 255);
+                    frame.set_pixel(p.x as usize, p.y as usize, 255, 255, 255);
                 } else {
-                    frame.set_pixel(p.x, p.y, 0, 0, 255);
+                    frame.set_pixel(p.x as usize, p.y as usize, 0, 0, 255);
                 }
             }
         }

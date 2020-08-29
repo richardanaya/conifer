@@ -2,16 +2,23 @@ use conifer::Config;
 use evdev::Device;
 
 fn main() {
-    let mut d = Config::new("/dev/input/event3", "/dev/fb0", 719., 1439.);
+    let mut d = Config::auto().unwrap();
 
-    d.run(|frame, pointer, delta_time| {
-        if pointer.y > 1350 {
-            // exit if we touch bottom of screen
-            return true;
-        }
-        if pointer.is_down {
-            // draw a pixel where our touch is
-            frame.set_pixel(pointer.x, pointer.y, 255, 255, 255);
+    d.run(|frame, swipe, delta_time| {
+        if let Some(swipe) = swipe {
+            let points = swipe.points.clone();
+            if points.iter().any(|p| p.x > 750) {
+                // exit if we touch right of the screen
+                return true;
+            }
+            // draw a swipe red when it's finished, white when ongoing
+            for p in points.iter() {
+                if swipe.finished {
+                    frame.set_pixel(p.x as usize, p.y as usize, 255, 255, 255);
+                } else {
+                    frame.set_pixel(p.x as usize, p.y as usize, 0, 0, 255);
+                }
+            }
         }
         false
     })

@@ -6,6 +6,15 @@ use std::os::unix::io::FromRawFd;
 use std::path::Path;
 use std::time::Instant;
 
+pub mod gesture;
+pub mod point;
+pub mod streamed_data;
+pub mod swipe;
+
+use crate::point::*;
+use crate::streamed_data::*;
+use crate::swipe::*;
+
 const EV_KEY: u16 = 1;
 const EV_ABS: u16 = 3;
 const EV_MSC: u16 = 4;
@@ -16,16 +25,7 @@ const ABS_MT_POSITION_X: u16 = 53;
 const ABS_MT_POSITION_Y: u16 = 54;
 const ABS_MT_TRACKING_ID: u16 = 57;
 const SYN: u16 = 0;
-const BUTTON_LEFT: u16 = 330;
-
-const INPUT_WIDTH: f32 = 719.0;
-const INPUT_HEIGHT: f32 = 1439.0;
-
-pub struct Pointer {
-    pub is_down: bool,
-    pub x: usize,
-    pub y: usize,
-}
+const BTN_TOUCH: u16 = 330;
 
 pub struct Frame {
     pub width: usize,
@@ -51,16 +51,46 @@ impl Frame {
         self.pixels[curr_index + 1] = g;
         self.pixels[curr_index + 2] = b;
     }
+
+    pub fn plotLine(&mut self, point0: Point, point1: Point) {
+        let mut x0 = point0.x as isize;
+        let mut x1 = point1.x as isize;
+        let mut y0 = point0.y as isize;
+        let mut y1 = point1.y as isize;
+        let mut dx = (x1 - x0).abs();
+        let mut sx = if x0 < x1 { 1 } else { -1 };
+        let mut dy = -(y1 - y0).abs();
+        let mut sy = if y0 < y1 { 1 } else { -1 };
+        let mut err = dx + dy; /* error value e_xy */
+        loop {
+            /* loop */
+            self.set_pixel(x0 as usize, y0 as usize, 255, 255, 255);
+            if (x0 == x1 && y0 == y1) {
+                break;
+            }
+            let e2 = 2 * err;
+            if (e2 >= dy) {
+                /* e_xy+e_x > 0 */
+                err += dy;
+                x0 += sx;
+            }
+            if (e2 <= dx) {
+                /* e_xy+e_y < 0 */
+                err += dx;
+                y0 += sy;
+            }
+        }
+    }
 }
 
 #[derive(Debug)]
 pub struct Config {
     input_device: Device,
     framebuffer: Framebuffer,
-    input_min_width: f32,
-    input_min_height: f32,
-    input_max_width: f32,
-    input_max_height: f32,
+    pub input_min_width: f32,
+    pub input_min_height: f32,
+    pub input_max_width: f32,
+    pub input_max_height: f32,
 }
 
 impl Config {
@@ -118,12 +148,7 @@ impl Config {
         Err("could not automatically determine configuration")
     }
 
-    pub fn run(&mut self, mut f: impl FnMut(&mut Frame, &Pointer, usize) -> bool) {
-        let mut pointer = Pointer {
-            is_down: false,
-            x: 0,
-            y: 0,
-        };
+    pub fn run(&mut self, mut f: impl FnMut(&mut Frame, Option<&Swipe>, usize) -> bool) {
         let start = Instant::now();
         let mut last_t = 0 as usize;
 
@@ -144,51 +169,38 @@ impl Config {
         let delta_t = t - last_t;
         last_t = t;
 
-        let exit = f(&mut frame, &mut pointer, delta_t);
+        let mut exit = f(&mut frame, None, delta_t);
         let _ = self.framebuffer.write_frame(&frame.pixels);
         if exit {
             return;
         }
 
+        let mut swipe_mem = StreamedSwipe {
+            swipe: None,
+            streamed_point: StreamedPoint::Nothing,
+        };
+
         'outer: loop {
             for ev in self.input_device.events_no_sync().unwrap() {
-                let mut did_update = false;
-                if ev._type == EV_KEY {
-                    if ev.code == BUTTON_LEFT {
-                        if ev.value == 1 {
-                            pointer.is_down = true;
-                            did_update = true;
-                        } else {
-                            pointer.is_down = false;
-                        }
-                    }
-                } else if ev._type == EV_ABS {
-                    if ev.code == ABS_X {
-                        println!(
-                            "{} {} {} {} ",
-                            ev.value,
-                            INPUT_WIDTH,
-                            w,
-                            (ev.value as f32 / INPUT_WIDTH * w as f32) as usize
-                        );
-                        pointer.x = (ev.value as f32 / INPUT_WIDTH * w as f32) as usize;
-                    } else if ev.code == ABS_Y {
-                        println!(
-                            "{} {} {} {} ",
-                            ev.value,
-                            INPUT_HEIGHT,
-                            h,
-                            (ev.value as f32 / INPUT_HEIGHT * h as f32) as usize
-                        );
-
-                        pointer.y = (ev.value as f32 / INPUT_HEIGHT * h as f32) as usize;
-                    }
-                }
+                let stream = match (ev._type, ev.code, ev.value) {
+                    (EV_ABS, ABS_X, x) => swipe_mem.update(SwipeFragment::PointFragment(
+                        PointFragment::X(Timeval::from_timeval(ev.time), x as isize),
+                    )),
+                    (EV_ABS, ABS_Y, y) => swipe_mem.update(SwipeFragment::PointFragment(
+                        PointFragment::Y(Timeval::from_timeval(ev.time), y as isize),
+                    )),
+                    (EV_KEY, BTN_TOUCH, 0) => swipe_mem.update(SwipeFragment::End),
+                    _ => StreamedState::Incomplete,
+                };
 
                 let t = start.elapsed().as_millis() as usize;
                 let delta_t = t - last_t;
                 last_t = t;
-                let exit = f(&mut frame, &mut pointer, delta_t);
+
+                if let StreamedState::Complete(swipe) | StreamedState::Standalone(swipe) = stream {
+                    exit = f(&mut frame, Some(&swipe), delta_t);
+                }
+
                 let _ = self.framebuffer.write_frame(&frame.pixels);
                 if exit {
                     break 'outer;

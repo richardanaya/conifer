@@ -2,13 +2,16 @@
 
 <a href="https://docs.rs/conifer"><img src="https://img.shields.io/badge/docs-latest-blue.svg?style=flat-square" alt="docs.rs docs" /></a>
 
+```
+[dependencies]
+confier = "0.0"
+```
+
 ```bash
 # Make sure your user is a part of video and input group
 sudo addusr video richard 
 sudo addusr input richard
 # Logout and login
-# verify the touch device in code matches your phone
-cat /proc/bus/input/devices
 ```
 
 A simple frame buffer game engine for PinePhone, Raspberry Pi, and other devices with touch screens.

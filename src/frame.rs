@@ -21,7 +21,7 @@ impl Frame {
             bytespp,
         })
     }
-    
+
     pub fn get_pixel(&mut self, x: usize, y: usize) -> (u8, u8, u8) {
         let curr_index = y * self.line_length + x * self.bytespp;
         (
@@ -38,7 +38,7 @@ impl Frame {
         self.pixels[curr_index + 2] = b;
     }
 
-    pub fn draw_frame(&mut self, x: usize, y: usize, frame: &Frame) -> Result<(),&'static str>{
+    pub fn draw_frame(&mut self, frame: &Frame, x: usize, y: usize) -> Result<(),&'static str>{
         if self.bytespp != frame.bytespp {
             return Err("cannot draw frame due to incompatible bits per pixel")
         }

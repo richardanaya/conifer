@@ -1,7 +1,7 @@
 use rand::Rng;
 use crate::frame::Frame;
 use std::path::Path;
-use image::{Rgb,GenericImageView};
+use image::{GenericImageView};
 use std::error::Error;
 
 pub fn random() -> f32 {

@@ -39,23 +39,24 @@ impl Frame {
         self.pixels[curr_index + 2] = b;
     }
 
-    pub fn draw_frame(&mut self, frame: &Frame, x: usize, y: usize) -> Result<(), &'static str> {
+    pub fn draw_frame(&mut self, frame: &Frame, x: isize, y: isize) -> Result<(), &'static str> {
         //if self.bytespp != frame.bytespp {
         //    return Err("cannot draw frame due to incompatible bits per pixel");
         //}
-        let r_width = usize::min(x + frame.width, self.width) - x;
-        let r_height = usize::min(y + frame.height, self.height) - y;
+        let r_width = isize::min(x + frame.width as isize, self.width as isize) - x;
+        let r_height = isize::min(y + frame.height as isize, self.height as isize) - y;
         for rx in 0..r_width {
             for ry in 0..r_height {
                 let x = x + rx;
                 let y = y + ry;
-                let curr_index = (y * self.width + x) * self.bytespp;
-                let r_index = (ry * frame.width + rx) * frame.bytespp;
-                if r_index+2 < frame.pixels.len() {
+                if x < 0 || y < 0{
+                    continue;
+                }
+                let curr_index = ((y * self.width as isize + x) * self.bytespp as isize) as usize;
+                let r_index = ((ry * frame.width as isize + rx) * frame.bytespp as isize) as usize;
                 self.pixels[curr_index] = frame.pixels[r_index+2];
                 self.pixels[curr_index + 1] = frame.pixels[r_index + 1];
                 self.pixels[curr_index + 2] = frame.pixels[r_index ];
-                }
             }
         }
         Ok(())

@@ -9,13 +9,11 @@ fn main() -> Result<(), Box<dyn Error>> {
         }
     }
     Config::auto()?.run(move |canvas, swipe, _delta_time| {
-        if let Some(s) = swipe {
-            if s.finished {
-                return Ok(RunResponse::Exit);
-            }
+        if swipe.is_some() {
+            return Ok(RunResponse::Exit);
         }
-        // let's draw some images randomly
-        for _ in 0..100 {
+        // let's draw some images randomly, but this time with a dithered mask
+        for _ in 0..10 {
             canvas.blit_canvas(
                 &img_pine,
                 (random() * canvas.width as f32) as isize - img_pine.width as isize / 2,

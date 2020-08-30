@@ -26,7 +26,7 @@ pub struct Config {
 
 pub enum RunEvent {
     Startup,
-    Time,
+    Timer(usize),
     Swipe(Swipe),
 }
 
@@ -130,11 +130,11 @@ impl Config {
         let (timer_tx, timer_rx) = flume::unbounded();
 
         std::thread::spawn(move || loop {
-            timer_tx.send(42);
+            timer_tx.send(1000).expect("something went wrong sending timer");
             std::thread::sleep(std::time::Duration::from_secs(1));
         });
 
-        let (event_tx, event_rx) = flume::unbounded();
+        let (swipe_tx, swipe_rx) = flume::unbounded();
 
         let id = self.input_device.clone();
         std::thread::spawn(move || {
@@ -152,12 +152,12 @@ impl Config {
                 };
                 match stream {
                     StreamedState::Complete(swipe) | StreamedState::Standalone(swipe) => {
-                        event_tx.send(swipe);
+                        swipe_tx.send(swipe).expect("something went wrong when sending swipe");
                     }
                     StreamedState::Incomplete => {}
                 }
                 Ok(())
-            });
+            }).expect("not sure why listening to event device would fail");
         });
 
         loop {
@@ -171,7 +171,7 @@ impl Config {
                 Err(flume::TryRecvError::Disconnected) => panic!("why would timer disconnect!"),
             };
 
-            let swipe = match event_rx.try_recv() {
+            let swipe = match swipe_rx.try_recv() {
                 Ok(s) => Some(s),
                 Err(flume::TryRecvError::Empty) => None,
                 Err(flume::TryRecvError::Disconnected) => panic!("why would events disconnect!"),
@@ -196,7 +196,7 @@ impl Config {
             }
 
             if let Some(t) = time {
-                match f(&mut canvas, RunEvent::Time, delta_t) {
+                match f(&mut canvas, RunEvent::Timer(t), delta_t) {
                     Ok(RunResponse::Draw) => {
                         fb.write_frame(&canvas.pixels);
                     }

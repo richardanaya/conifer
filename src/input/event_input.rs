@@ -1,3 +1,4 @@
+use crate::input::InputEvent;
 use crate::point::Timeval;
 use evdev::{Device, ABSOLUTE};
 use std::path::Path;
@@ -9,7 +10,7 @@ const ABS_Y: u16 = 1;
 const BTN_TOUCH: u16 = 330;
 
 #[derive(Debug)]
-pub struct Input {
+pub struct EventInput {
     input_device: Device,
     pub input_min_width: f32,
     pub input_min_height: f32,
@@ -17,14 +18,7 @@ pub struct Input {
     pub input_max_height: f32,
 }
 
-pub enum InputEvent {
-    PartialX(isize, Timeval),
-    PartialY(isize, Timeval),
-    ButtonDown(usize),
-    Unknown,
-}
-
-impl Input {
+impl EventInput {
     pub fn new<P: AsRef<Path>>(
         path_to_input_device: P,
         input_min_width: f32,
@@ -34,7 +28,7 @@ impl Input {
     ) -> Self {
         let input_device = Device::open(&path_to_input_device).unwrap();
 
-        Input {
+        EventInput {
             input_device,
             input_min_width,
             input_min_height,
@@ -60,7 +54,7 @@ impl Input {
                         )
                     };
 
-                    return Ok(Input {
+                    return Ok(EventInput {
                         input_device: d,
                         input_min_width: x_abs_val.minimum as f32,
                         input_min_height: y_abs_val.minimum as f32,

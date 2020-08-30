@@ -4,7 +4,8 @@ use std::error::Error;
 use std::path::Path;
 use std::time::Instant;
 
-use crate::input::{Input, InputEvent};
+use crate::input::event_input::EventInput;
+use crate::input::InputEvent;
 use crate::point::*;
 use crate::streamed_data::*;
 use crate::swipe::*;
@@ -20,7 +21,7 @@ pub enum RunResponse {
 #[derive(Debug)]
 pub struct Config {
     framebuffer: Rc<RefCell<Framebuffer>>,
-    input_device: Input,
+    input_device: EventInput,
 }
 
 impl Config {
@@ -33,7 +34,7 @@ impl Config {
         input_max_height: f32,
     ) -> Self {
         let framebuffer = Framebuffer::new(path_to_framebuffer).unwrap();
-        let input_device = Input::new(
+        let input_device = EventInput::new(
             &path_to_input_device,
             input_min_width,
             input_min_height,
@@ -49,7 +50,7 @@ impl Config {
 
     pub fn auto() -> Result<Self, &'static str> {
         let framebuffer = Framebuffer::auto().unwrap();
-        let input_device = Input::auto().unwrap();
+        let input_device = EventInput::auto().unwrap();
         Ok(Config {
             input_device,
             framebuffer: Rc::new(RefCell::new(framebuffer)),
@@ -58,7 +59,8 @@ impl Config {
 
     pub fn run(
         &mut self,
-        mut f: impl FnMut(&mut Canvas, Option<&Swipe>, usize) -> Result<RunResponse, Box<dyn Error>>,
+        mut f: impl FnMut(&mut Canvas, Option<&Swipe>, usize) -> Result<RunResponse, Box<dyn Error>>
+            + 'static,
     ) {
         let start = Instant::now();
         let mut last_t = 0 as usize;

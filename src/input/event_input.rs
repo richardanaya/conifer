@@ -1,6 +1,7 @@
 use crate::input::InputEvent;
 use crate::point::Timeval;
 use evdev::{Device, ABSOLUTE};
+use std::error::Error;
 use std::path::Path;
 
 const EV_KEY: u16 = 1;
@@ -25,16 +26,16 @@ impl EventInput {
         input_min_height: f32,
         input_max_width: f32,
         input_max_height: f32,
-    ) -> Self {
-        let input_device = Device::open(&path_to_input_device).unwrap();
+    ) -> Result<Self, Box<dyn Error>> {
+        let input_device = Device::open(&path_to_input_device)?;
 
-        EventInput {
+        Ok(EventInput {
             input_device,
             input_min_width,
             input_min_height,
             input_max_width,
             input_max_height,
-        }
+        })
     }
 
     pub fn auto() -> Result<Self, &'static str> {
@@ -67,9 +68,12 @@ impl EventInput {
         Err("Could not find a valid input device")
     }
 
-    pub fn on_event(&mut self, mut f: impl FnMut(InputEvent)) {
+    pub fn on_event(
+        &mut self,
+        mut f: impl FnMut(InputEvent) -> Result<(), Box<dyn Error>>,
+    ) -> Result<(), Box<dyn Error>> {
         loop {
-            for ev in self.input_device.events_no_sync().unwrap() {
+            for ev in self.input_device.events_no_sync()? {
                 let e = match (ev._type, ev.code, ev.value, ev.time) {
                     (EV_ABS, ABS_X, x, time) => {
                         InputEvent::PartialX(x as isize, Timeval::from_timeval(time))
@@ -80,7 +84,7 @@ impl EventInput {
                     (EV_KEY, BTN_TOUCH, 0, _) => InputEvent::ButtonDown(0),
                     _ => InputEvent::Unknown,
                 };
-                f(e);
+                f(e)?;
             }
         }
     }

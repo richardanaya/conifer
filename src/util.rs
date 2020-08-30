@@ -16,7 +16,7 @@ where
 }
 
 pub fn load_image<P: AsRef<Path>>(path: P) -> Result<Canvas, Box<dyn Error>> {
-    let img = image::open(path).unwrap();
+    let img = image::open(path)?;
     let d = img.dimensions();
     let mut pixels = vec![];
     for r in img.pixels() {

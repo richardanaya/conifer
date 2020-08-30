@@ -31,8 +31,9 @@ impl Framebuffer {
         Ok(())
     }
 
-    pub fn shutdown(&self) {
-        framebuffer::Framebuffer::set_kd_mode(framebuffer::KdMode::Text).unwrap();
+    pub fn shutdown(&self) -> Result<(), Box<dyn Error>> {
+        framebuffer::Framebuffer::set_kd_mode(framebuffer::KdMode::Text)?;
+        Ok(())
     }
 
     pub fn width(&self) -> usize {

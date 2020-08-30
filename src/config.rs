@@ -32,25 +32,25 @@ impl Config {
         input_min_height: f32,
         input_max_width: f32,
         input_max_height: f32,
-    ) -> Self {
-        let framebuffer = Framebuffer::new(path_to_framebuffer).unwrap();
+    ) -> Result<Self, Box<dyn Error>> {
+        let framebuffer = Framebuffer::new(path_to_framebuffer)?;
         let input_device = EventInput::new(
             &path_to_input_device,
             input_min_width,
             input_min_height,
             input_max_width,
             input_max_height,
-        );
+        )?;
 
-        Config {
+        Ok(Config {
             framebuffer: Rc::new(RefCell::new(framebuffer)),
             input_device,
-        }
+        })
     }
 
-    pub fn auto() -> Result<Self, &'static str> {
-        let framebuffer = Framebuffer::auto().unwrap();
-        let input_device = EventInput::auto().unwrap();
+    pub fn auto() -> Result<Self, Box<dyn Error>> {
+        let framebuffer = Framebuffer::auto()?;
+        let input_device = EventInput::auto()?;
         Ok(Config {
             input_device,
             framebuffer: Rc::new(RefCell::new(framebuffer)),
@@ -61,7 +61,7 @@ impl Config {
         &mut self,
         mut f: impl FnMut(&mut Canvas, Option<&Swipe>, usize) -> Result<RunResponse, Box<dyn Error>>
             + 'static,
-    ) {
+    ) -> Result<(), Box<dyn Error>> {
         let start = Instant::now();
         let mut last_t = 0 as usize;
 
@@ -78,22 +78,33 @@ impl Config {
             pixels: vec![0u8; line_length * h],
         };
 
-        fb.setup();
+        if let Err(err) = fb.setup() {
+            // try to shut down because because being stuck in graphics mode is really bad
+            fb.shutdown()?;
+            eprintln!("Error occured in user run loop: {}", err);
+            std::process::exit(0);
+        }
 
         let t = start.elapsed().as_millis() as usize;
         let delta_t = t - last_t;
         last_t = t;
 
-        let mut run_response = f(&mut canvas, None, delta_t);
-        if let Err(err) = run_response {
-            fb.shutdown();
-            eprintln!("Error occured in user run loop: {}", err);
-            std::process::exit(0);
-        }
-        fb.write_frame(&canvas.pixels);
-        if let Ok(RunResponse::Exit) = run_response {
-            fb.shutdown();
-            std::process::exit(0);
+        match f(&mut canvas, None, delta_t) {
+            Ok(RunResponse::Draw) => {
+                fb.write_frame(&canvas.pixels);
+            }
+            Ok(RunResponse::Exit) => {
+                fb.shutdown()?;
+                std::process::exit(0);
+            }
+            Ok(RunResponse::NothingChanged) => {
+                //Question: should we show something if the first run doesn't say to paint?
+            }
+            Err(err) => {
+                fb.shutdown()?;
+                eprintln!("Error occured in user run loop: {}", err);
+                std::process::exit(0);
+            }
         }
 
         let mut swipe_mem = StreamedSwipe {
@@ -101,7 +112,7 @@ impl Config {
             streamed_point: StreamedPoint::Nothing,
         };
 
-        self.input_device.on_event(|ev| {
+        self.input_device.on_event(move |ev| {
             let stream = match ev {
                 InputEvent::PartialX(x, time) => {
                     swipe_mem.update(SwipeFragment::PointFragment(PointFragment::X(time, x)))
@@ -117,21 +128,28 @@ impl Config {
             let delta_t = t - last_t;
             last_t = t;
 
-            if let StreamedState::Complete(swipe) | StreamedState::Standalone(swipe) = stream {
-                run_response = f(&mut canvas, Some(&swipe), delta_t);
+            match stream {
+                StreamedState::Complete(swipe) | StreamedState::Standalone(swipe) => {
+                    match f(&mut canvas, Some(&swipe), delta_t) {
+                        Ok(RunResponse::Draw) => {
+                            fb.write_frame(&canvas.pixels);
+                        }
+                        Ok(RunResponse::Exit) => {
+                            fb.shutdown()?;
+                            std::process::exit(0);
+                        }
+                        Ok(RunResponse::NothingChanged) => {}
+                        Err(err) => {
+                            fb.shutdown()?;
+                            eprintln!("Error occured in user run loop: {}", err);
+                            std::process::exit(0);
+                        }
+                    }
+                }
+                StreamedState::Incomplete => {}
             }
-            if let Err(err) = &run_response {
-                fb.shutdown();
-                eprintln!("Error occured in user run loop: {}", err);
-                std::process::exit(0);
-            }
-
-            if let Ok(RunResponse::Draw) = run_response {
-                fb.write_frame(&canvas.pixels);
-            } else if let Ok(RunResponse::Exit) = run_response {
-                fb.shutdown();
-                std::process::exit(0);
-            }
-        })
+            Ok(())
+        })?;
+        Ok(())
     }
 }

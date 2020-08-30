@@ -27,5 +27,5 @@ pub fn load_image<P: AsRef<Path>>(path: P) -> Result<Canvas, Box<dyn Error>> {
         pixels.push(p[0]);
         pixels.push(p[3]);
     }
-    Canvas::new(d.0 as usize, d.1 as usize, &pixels)
+    Ok(Canvas::new(d.0 as usize, d.1 as usize, &pixels))
 }

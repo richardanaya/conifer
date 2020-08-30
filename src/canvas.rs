@@ -11,16 +11,37 @@ pub struct Canvas {
 }
 
 impl Canvas {
-    pub fn new(width: usize, height: usize, pixels: &[u8]) -> Result<Self, Box<dyn Error>> {
+    pub fn new(width: usize, height: usize, pixels: &[u8]) -> Self {
         let bytespp = pixels.len() / (width * height);
         let line_length = bytespp * width;
-        Ok(Canvas {
+        Canvas {
             pixels: pixels.to_owned(),
             width,
             height,
             line_length,
             bytespp,
-        })
+        }
+    }
+
+    pub fn from_color(width: usize, height: usize, r: u8, g: u8, b: u8) -> Self {
+        let mut pixels = vec![];
+        for _ in 0..width {
+            for _ in 0..height {
+                pixels.push(b);
+                pixels.push(g);
+                pixels.push(r);
+                pixels.push(255);
+            }
+        }
+        let bytespp = pixels.len() / (width * height);
+        let line_length = bytespp * width;
+        Canvas {
+            pixels: pixels.to_owned(),
+            width,
+            height,
+            line_length,
+            bytespp,
+        }
     }
 
     pub fn get_pixel(&mut self, x: usize, y: usize) -> (u8, u8, u8) {
@@ -57,6 +78,14 @@ impl Canvas {
             let (_, r_right) = canvas.pixels.split_at(r_index);
             right[..len].copy_from_slice(&r_right[..len])
         }
+        Ok(())
+    }
+
+    pub fn copy_from_canvas(&mut self, canvas: &Canvas) -> Result<(), Box<dyn Error>> {
+        if self.pixels.len() != canvas.pixels.len() {
+            return Err("cannot copy in canvas that isn't same size".into());
+        }
+        self.pixels.copy_from_slice(&canvas.pixels);
         Ok(())
     }
 

@@ -19,8 +19,9 @@ A simple canvas buffer game engine for PinePhone, Raspberry Pi, and other device
 [dependencies]
 conifer = "0.0"
 ```
+## Before You Start
 
- Make sure your user is a part of `video` and `input` group
+Make sure your user is a part of `video` and `input` group
 
 ```bash
 sudo addusr video richard 

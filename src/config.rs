@@ -6,9 +6,11 @@ use std::time::Instant;
 
 use crate::input::event_input::EventInput;
 use crate::input::InputEvent;
+use crate::layer::*;
 use crate::point::*;
 use crate::streamed_data::*;
 use crate::swipe::*;
+
 use std::cell::RefCell;
 use std::rc::Rc;
 
@@ -76,6 +78,8 @@ impl Config {
             line_length,
             bytespp: fb.bytes_per_pixel(),
             pixels: vec![0u8; line_length * h],
+            layers: Vec::<Layer>::new(),
+            background: Pixel { r: 0, g: 0, b: 0 },
         };
 
         fb.setup();
@@ -90,7 +94,7 @@ impl Config {
             eprintln!("Error occured in user run loop: {}", err);
             std::process::exit(0);
         }
-        fb.write_frame(&canvas.pixels);
+        fb.write_frame(canvas.pixels());
         if let Ok(RunResponse::Exit) = run_response {
             fb.shutdown();
             std::process::exit(0);
@@ -127,7 +131,8 @@ impl Config {
             }
 
             if let Ok(RunResponse::Draw) = run_response {
-                fb.write_frame(&canvas.pixels);
+                let pixels = canvas.pixels();
+                fb.write_frame(pixels);
             } else if let Ok(RunResponse::Exit) = run_response {
                 fb.shutdown();
                 std::process::exit(0);

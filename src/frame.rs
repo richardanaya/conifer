@@ -1,5 +1,7 @@
 use crate::point::Point;
+use std::error::Error;
 
+#[derive(Debug)]
 pub struct Frame {
     pub width: usize,
     pub height: usize,
@@ -9,6 +11,18 @@ pub struct Frame {
 }
 
 impl Frame {
+    pub fn new(width: usize, height: usize, pixels: &[u8]) -> Result<Self, Box<dyn Error>> {
+        let bytespp = pixels.len() / (width * height);
+        let line_length = bytespp * width;
+        Ok(Frame {
+            pixels: pixels.to_owned(),
+            width,
+            height,
+            line_length,
+            bytespp,
+        })
+    }
+
     pub fn get_pixel(&mut self, x: usize, y: usize) -> (u8, u8, u8) {
         let curr_index = y * self.line_length + x * self.bytespp;
         (
@@ -23,6 +37,27 @@ impl Frame {
         self.pixels[curr_index] = r;
         self.pixels[curr_index + 1] = g;
         self.pixels[curr_index + 2] = b;
+    }
+
+    pub fn draw_frame(&mut self, frame: &Frame, x: isize, y: isize) -> Result<(), &'static str> {
+        // TODO figure out if this matterns
+        //if self.bytespp != frame.bytespp {
+        //    return Err("cannot draw frame due to incompatible bits per pixel");
+        //}
+        let start_y = isize::max(y, 0);
+        let end_y = isize::min(y + frame.height as isize, self.height as isize);
+        let start_x = isize::max(x, 0);
+        let end_x = isize::min(x + frame.width as isize, self.width as isize);
+        for ry in start_y..end_y {
+            let len = ((end_x - start_x) * frame.bytespp as isize) as usize;
+            let cur_index = ((ry * self.width as isize + start_x) * self.bytespp as isize) as usize;
+            let r_index = (((ry - y) * frame.width as isize + (start_x - x))
+                * frame.bytespp as isize) as usize;
+            let (_, right) = self.pixels.split_at_mut(cur_index);
+            let (_, r_right) = frame.pixels.split_at(r_index);
+            right[..len].copy_from_slice(&r_right[..len])
+        }
+        Ok(())
     }
 
     pub fn plot_line(&mut self, point0: Point, point1: Point) {

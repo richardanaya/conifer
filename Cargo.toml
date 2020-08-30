@@ -15,6 +15,7 @@ readme="README.md"
 framebuffer = "0.2"
 evdev = "0.10"
 libc = "*"
+rand = "0"
 
 [dev-dependencies]
 env_logger = "*"

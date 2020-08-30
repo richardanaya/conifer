@@ -23,6 +23,8 @@ impl Framebuffer {
 
     pub fn setup(&self) -> Result<(),Box<dyn Error>> {
         framebuffer::Framebuffer::set_kd_mode(framebuffer::KdMode::Graphics)?;
+        // force the framebuffer to activate
+        // https://unix.stackexchange.com/questions/58420/writes-to-framebuffer-dev-fb0-do-not-seem-to-change-graphics-screen
         let mut screen = framebuffer::Framebuffer::get_var_screeninfo(&self.fb.device)?;
         screen.activate |= FB_ACTIVATE_NOW | FB_ACTIVATE_FORCE; 
         framebuffer::Framebuffer::put_var_screeninfo(&self.fb.device,&screen)?;

@@ -8,7 +8,7 @@ fn main() {
     info!("Starting");
     let mut d = Config::auto().unwrap();
 
-    d.run(|frame, swipe, delta_time| {
+    d.run(|canvas, swipe, delta_time| {
         debug!("Enter callback");
         if let Some(swipe) = swipe {
             debug!("New swipe");
@@ -19,7 +19,7 @@ fn main() {
             debug!("{:?}", swipe.tap(20));
             if let Some(Gesture::Tap(point)) = swipe.tap(20) {
                 debug!("Draw tap");
-                frame.set_pixel(point.x as usize, point.y as usize, 255, 255, 255);
+                canvas.set_pixel(point.x as usize, point.y as usize, 255, 255, 255);
             }
         }
         Ok(RunResponse::Draw)

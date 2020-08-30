@@ -8,7 +8,7 @@ fn main() {
     info!("Starting");
     let mut d = Config::auto().unwrap();
 
-    d.run(|frame, swipe, delta_time| {
+    d.run(|canvas, swipe, delta_time| {
         debug!("Enter callback");
         if let Some(swipe) = swipe {
             debug!("New swipe");
@@ -20,7 +20,7 @@ fn main() {
             debug!("{:?}", swipe.drag());
             if let Some(Gesture::Drag(point0, point1)) = swipe.drag() {
                 debug!("Draw line");
-                frame.plot_line(point0, point1);
+                canvas.plot_line(point0, point1);
             }
         }
         Ok(RunResponse::Draw)

@@ -1,4 +1,4 @@
-use crate::frame::Frame;
+use crate::canvas::Canvas;
 use crate::framebuffer::Framebuffer;
 use std::error::Error;
 use std::path::Path;
@@ -58,7 +58,7 @@ impl Config {
 
     pub fn run(
         &mut self,
-        mut f: impl FnMut(&mut Frame, Option<&Swipe>, usize) -> Result<RunResponse, Box<dyn Error>>,
+        mut f: impl FnMut(&mut Canvas, Option<&Swipe>, usize) -> Result<RunResponse, Box<dyn Error>>,
     ) {
         let start = Instant::now();
         let mut last_t = 0 as usize;
@@ -68,7 +68,7 @@ impl Config {
         let w = fb.width();
         let h = fb.height();
         let line_length = fb.line_length();
-        let mut frame = Frame {
+        let mut canvas = Canvas {
             width: w,
             height: h,
             line_length,
@@ -82,13 +82,13 @@ impl Config {
         let delta_t = t - last_t;
         last_t = t;
 
-        let mut run_response = f(&mut frame, None, delta_t);
+        let mut run_response = f(&mut canvas, None, delta_t);
         if let Err(err) = run_response {
             fb.shutdown();
             eprintln!("Error occured in user run loop: {}", err);
             std::process::exit(0);
         }
-        fb.write_frame(&frame.pixels);
+        fb.write_frame(&canvas.pixels);
         if let Ok(RunResponse::Exit) = run_response {
             fb.shutdown();
             std::process::exit(0);
@@ -116,7 +116,7 @@ impl Config {
             last_t = t;
 
             if let StreamedState::Complete(swipe) | StreamedState::Standalone(swipe) = stream {
-                run_response = f(&mut frame, Some(&swipe), delta_t);
+                run_response = f(&mut canvas, Some(&swipe), delta_t);
             }
             if let Err(err) = &run_response {
                 fb.shutdown();
@@ -125,7 +125,7 @@ impl Config {
             }
 
             if let Ok(RunResponse::Draw) = run_response {
-                fb.write_frame(&frame.pixels);
+                fb.write_frame(&canvas.pixels);
             } else if let Ok(RunResponse::Exit) = run_response {
                 fb.shutdown();
                 std::process::exit(0);

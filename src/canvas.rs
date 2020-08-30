@@ -1,6 +1,6 @@
 use crate::point::Point;
 
-pub struct Frame {
+pub struct Canvas {
     pub width: usize,
     pub height: usize,
     pub pixels: Vec<u8>,
@@ -8,7 +8,7 @@ pub struct Frame {
     pub bytespp: usize,
 }
 
-impl Frame {
+impl Canvas {
     pub fn get_pixel(&mut self, x: usize, y: usize) -> (u8, u8, u8) {
         let curr_index = y * self.line_length + x * self.bytespp;
         (

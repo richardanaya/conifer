@@ -1,5 +1,5 @@
 pub mod config;
-pub mod frame;
+pub mod canvas;
 pub mod framebuffer;
 pub mod gesture;
 pub mod input;

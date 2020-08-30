@@ -2,7 +2,7 @@
 
 <a href="https://docs.rs/conifer"><img src="https://img.shields.io/badge/docs-latest-blue.svg?style=flat-square" alt="docs.rs docs" /></a>
 
-A simple frame buffer game engine for PinePhone, Raspberry Pi, and other devices with touch screens.
+A simple canvas buffer game engine for PinePhone, Raspberry Pi, and other devices with touch screens.
 
 - [x] make games without X11!
 - [x] auto detect virtual terminal framebuffer
@@ -34,19 +34,19 @@ sudo addusr input richard
 use conifer::prelude::*;
 
 fn main() -> Result<(), Box<dyn Error>> {
-    Config::auto()?.run(|frame, swipe, _delta_time| {
+    Config::auto()?.run(|canvas, swipe, _delta_time| {
         // if the user swiped, exit
         if swipe.is_some() {
             return Ok(RunResponse::Exit);
         }
         // draw something to framebuffer pixels
-        for y in 0..frame.height {
-            for x in 0..frame.width {
-                frame.set_pixel(
+        for y in 0..canvas.height {
+            for x in 0..canvas.width {
+                canvas.set_pixel(
                     x,
                     y,
-                    ((x as f32 / frame.width as f32) * 255.0) as u8,
-                    ((y as f32 / frame.height as f32) * 255.0) as u8,
+                    ((x as f32 / canvas.width as f32) * 255.0) as u8,
+                    ((y as f32 / canvas.height as f32) * 255.0) as u8,
                     0 as u8,
                 );
             }

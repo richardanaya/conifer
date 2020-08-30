@@ -39,7 +39,7 @@ impl Canvas {
         self.pixels[curr_index + 2] = b;
     }
 
-    pub fn draw_frame(&mut self, canvas: &Canvas, x: isize, y: isize) -> Result<(), &'static str> {
+    pub fn draw_canvas(&mut self, canvas: &Canvas, x: isize, y: isize) -> Result<(), &'static str> {
         // TODO figure out if this matterns
         //if self.bytespp != canvas.bytespp {
         //    return Err("cannot draw canvas due to incompatible bits per pixel");

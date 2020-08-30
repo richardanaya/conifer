@@ -9,8 +9,8 @@ use crate::input::InputEvent;
 use crate::point::*;
 use crate::streamed_data::*;
 use crate::swipe::*;
-use std::cell::RefCell;
-use std::rc::Rc;
+use std::sync::Mutex;
+use std::sync::Arc;
 
 pub enum RunResponse {
     Exit,
@@ -20,8 +20,14 @@ pub enum RunResponse {
 
 #[derive(Debug)]
 pub struct Config {
-    framebuffer: Rc<RefCell<Framebuffer>>,
-    input_device: EventInput,
+    framebuffer: Arc<Mutex<Framebuffer>>,
+    input_device: Arc<Mutex<EventInput>>,
+}
+
+pub enum RunEvent {
+    Startup,
+    Time,
+    Swipe(Swipe)
 }
 
 impl Config {
@@ -43,8 +49,8 @@ impl Config {
         )?;
 
         Ok(Config {
-            framebuffer: Rc::new(RefCell::new(framebuffer)),
-            input_device,
+            framebuffer: Arc::new(Mutex::new(framebuffer)),
+            input_device: Arc::new(Mutex::new(input_device)),
         })
     }
 
@@ -52,28 +58,30 @@ impl Config {
         let framebuffer = Framebuffer::auto()?;
         let input_device = EventInput::auto()?;
         Ok(Config {
-            input_device,
-            framebuffer: Rc::new(RefCell::new(framebuffer)),
+            input_device: Arc::new(Mutex::new(input_device)),
+            framebuffer: Arc::new(Mutex::new(framebuffer)),
         })
     }
 
     pub fn screen_width(&self) -> usize {
-        return self.framebuffer.borrow().width();
+        let fb = self.framebuffer.lock().unwrap();
+        return fb.width();
     }
 
     pub fn screen_height(&self) -> usize {
-        return self.framebuffer.borrow().height();
+        let fb = self.framebuffer.lock().unwrap();
+        return fb.height();
     }
 
     pub fn run(
         &mut self,
-        mut f: impl FnMut(&mut Canvas, Option<&Swipe>, usize) -> Result<RunResponse, Box<dyn Error>>
+        mut f: impl FnMut(&mut Canvas, RunEvent, usize) -> Result<RunResponse, Box<dyn Error>>
             + 'static,
     ) -> Result<(), Box<dyn Error>> {
         let start = Instant::now();
         let mut last_t = 0 as usize;
 
-        let mut fb = self.framebuffer.borrow_mut();
+        let mut fb = self.framebuffer.lock().unwrap();
 
         let w = fb.width();
         let h = fb.height();
@@ -97,7 +105,7 @@ impl Config {
         let delta_t = t - last_t;
         last_t = t;
 
-        match f(&mut canvas, None, delta_t) {
+        match f(&mut canvas, RunEvent::Startup, delta_t) {
             Ok(RunResponse::Draw) => {
                 fb.write_frame(&canvas.pixels);
             }
@@ -120,44 +128,98 @@ impl Config {
             streamed_point: StreamedPoint::Nothing,
         };
 
-        self.input_device.on_event(move |ev| {
-            let stream = match ev {
-                InputEvent::PartialX(x, time) => {
-                    swipe_mem.update(SwipeFragment::PointFragment(PointFragment::X(time, x)))
-                }
-                InputEvent::PartialY(y, time) => swipe_mem.update(SwipeFragment::PointFragment(
-                    PointFragment::Y(time, y as isize),
-                )),
-                InputEvent::ButtonDown(_) => swipe_mem.update(SwipeFragment::End),
-                _ => StreamedState::Incomplete,
-            };
 
+        let (timer_tx, timer_rx) = flume::unbounded();
+
+        std::thread::spawn(move || {
+            loop {
+                timer_tx.send(42);
+                std::thread::sleep(std::time::Duration::from_secs(1));
+            }
+        });
+
+        let (event_tx, event_rx) = flume::unbounded();
+
+        let id = self.input_device.clone();
+        std::thread::spawn(move || {
+            let mut i = id.lock().unwrap();
+            i.on_event(move |ev| {
+                let stream = match ev {
+                    InputEvent::PartialX(x, time) => {
+                        swipe_mem.update(SwipeFragment::PointFragment(PointFragment::X(time, x)))
+                    }
+                    InputEvent::PartialY(y, time) => swipe_mem.update(SwipeFragment::PointFragment(
+                        PointFragment::Y(time, y as isize),
+                    )),
+                    InputEvent::ButtonDown(_) => swipe_mem.update(SwipeFragment::End),
+                    _ => StreamedState::Incomplete,
+                };
+                match stream {
+                    StreamedState::Complete(swipe) | StreamedState::Standalone(swipe) => {
+                        event_tx.send(swipe);
+                    },
+                    StreamedState::Incomplete => {},
+                }
+                Ok(())
+            });
+        });
+
+        loop {
             let t = start.elapsed().as_millis() as usize;
             let delta_t = t - last_t;
             last_t = t;
 
-            match stream {
-                StreamedState::Complete(swipe) | StreamedState::Standalone(swipe) => {
-                    match f(&mut canvas, Some(&swipe), delta_t) {
-                        Ok(RunResponse::Draw) => {
-                            fb.write_frame(&canvas.pixels);
-                        }
-                        Ok(RunResponse::Exit) => {
-                            fb.shutdown()?;
-                            std::process::exit(0);
-                        }
-                        Ok(RunResponse::NothingChanged) => {}
-                        Err(err) => {
-                            fb.shutdown()?;
-                            eprintln!("Error occured in user run loop: {}", err);
-                            std::process::exit(0);
-                        }
+            let time = match timer_rx.try_recv() {
+                Ok(t) => {
+                    Some(t)
+                }
+                Err(flume::TryRecvError::Empty) => None,
+                Err(flume::TryRecvError::Disconnected) => panic!("why would timer disconnect!"),
+            };
+
+            let swipe = match event_rx.try_recv() {
+                Ok(s) => {
+                    Some(s)
+                }
+                Err(flume::TryRecvError::Empty) =>  None,
+                Err(flume::TryRecvError::Disconnected) =>  panic!("why would events disconnect!"),
+            };
+
+            if let Some(s) = swipe {
+                match f(&mut canvas, RunEvent::Swipe(s.clone()), delta_t) {
+                    Ok(RunResponse::Draw) => {
+                        fb.write_frame(&canvas.pixels);
+                    }
+                    Ok(RunResponse::Exit) => {
+                        fb.shutdown()?;
+                        std::process::exit(0);
+                    }
+                    Ok(RunResponse::NothingChanged) => {}
+                    Err(err) => {
+                        fb.shutdown()?;
+                        eprintln!("Error occured in user run loop: {}", err);
+                        std::process::exit(0);
                     }
                 }
-                StreamedState::Incomplete => {}
             }
-            Ok(())
-        })?;
-        Ok(())
+
+            if let Some(t) = time {
+                match f(&mut canvas, RunEvent::Time, delta_t) {
+                    Ok(RunResponse::Draw) => {
+                        fb.write_frame(&canvas.pixels);
+                    }
+                    Ok(RunResponse::Exit) => {
+                        fb.shutdown()?;
+                        std::process::exit(0);
+                    }
+                    Ok(RunResponse::NothingChanged) => {}
+                    Err(err) => {
+                        fb.shutdown()?;
+                        eprintln!("Error occured in user run loop: {}", err);
+                        std::process::exit(0);
+                    }
+                }
+            }
+        }
     }
 }

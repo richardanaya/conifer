@@ -3,8 +3,8 @@ use conifer::prelude::*;
 fn main() {
     let mut d = Config::auto().unwrap();
 
-    d.run(|canvas, swipe, delta_time| {
-        if let Some(swipe) = swipe {
+    d.run(|canvas, event, delta_time| {
+        if let RunEvent::Swipe(swipe) = event {
             let points = swipe.points.clone();
             if points.iter().any(|p| p.x > 750) {
                 // exit if we touch right of the screen
@@ -20,5 +20,5 @@ fn main() {
             }
         }
         Ok(RunResponse::Draw)
-    })
+    });
 }

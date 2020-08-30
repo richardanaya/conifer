@@ -17,6 +17,7 @@ evdev = "0.10"
 libc = "*"
 rand = "0"
 image = "0.23"
+flume = "0.7"
 
 [dev-dependencies]
 env_logger = "*"

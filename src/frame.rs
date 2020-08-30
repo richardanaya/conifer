@@ -49,13 +49,12 @@ impl Frame {
         let start_x = isize::max(x,0);
         let end_x = isize::min(x+frame.width as isize, self.width as isize);
         for ry in start_y..end_y {
-            for rx in start_x..end_x {
-                let curr_index = ((ry * self.width as isize + rx) * self.bytespp as isize) as usize;
-                let r_index = (((ry-y) * frame.width as isize + (rx-x)) * frame.bytespp as isize) as usize;
-                self.pixels[curr_index] = frame.pixels[r_index ];
-                self.pixels[curr_index + 1] = frame.pixels[r_index + 1];
-                self.pixels[curr_index + 2] = frame.pixels[r_index + 2];
-            }
+            let len = ((end_x-start_x)*frame.bytespp as isize) as usize;
+            let cur_index = ((ry * self.width as isize + start_x) * self.bytespp as isize) as usize;
+            let r_index = (((ry-y) * frame.width as isize + (start_x-x)) * frame.bytespp as isize) as usize;
+            let (_,right) = self.pixels.split_at_mut(cur_index);
+            let (_,r_right) = frame.pixels.split_at(r_index);
+            right[..len].copy_from_slice(&r_right[..len])
         }
         Ok(())
     }

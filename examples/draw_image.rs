@@ -13,7 +13,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             canvas.draw_canvas(
                 &img_pine,
                 (random() * canvas.width as f32) as isize - img_pine.width as isize / 2,
-                (random() * canvas.width as f32) as isize - img_pine.height as isize / 2,
+                (random() * canvas.height as f32) as isize - img_pine.height as isize / 2,
             )?;
         }
         Ok(RunResponse::Draw)

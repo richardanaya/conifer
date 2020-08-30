@@ -14,11 +14,11 @@ pub fn load_image<P: AsRef<Path>>(path: P) -> Result<Frame, Box<dyn Error>> {
     let mut pixels = vec![];
     for r in img.pixels() {
         let p = r.2;
-        pixels.push(p[0]);
-        pixels.push(p[1]);
+        // this ordering works for my framebuffer, does it work for all?
         pixels.push(p[2]);
-        //TODO figure out alpha?
-        //pixels.push(p[3]);
+        pixels.push(p[1]);
+        pixels.push(p[0]);
+        pixels.push(p[3]);
     }
     Frame::new(d.0 as usize, d.1 as usize, &pixels)
 }

@@ -57,6 +57,14 @@ impl Config {
         })
     }
 
+    pub fn screen_width(&self) -> usize {
+        return self.framebuffer.borrow().width();
+    }
+
+    pub fn screen_height(&self) -> usize {
+        return self.framebuffer.borrow().height();
+    }
+
     pub fn run(
         &mut self,
         mut f: impl FnMut(&mut Canvas, Option<&Swipe>, usize) -> Result<RunResponse, Box<dyn Error>>

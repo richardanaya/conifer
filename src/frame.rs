@@ -44,16 +44,17 @@ impl Frame {
         //if self.bytespp != frame.bytespp {
         //    return Err("cannot draw frame due to incompatible bits per pixel");
         //}
-        let start_y = isize::max(y,0);
-        let end_y = isize::min(y+frame.height as isize,self.height as isize);
-        let start_x = isize::max(x,0);
-        let end_x = isize::min(x+frame.width as isize, self.width as isize);
+        let start_y = isize::max(y, 0);
+        let end_y = isize::min(y + frame.height as isize, self.height as isize);
+        let start_x = isize::max(x, 0);
+        let end_x = isize::min(x + frame.width as isize, self.width as isize);
         for ry in start_y..end_y {
-            let len = ((end_x-start_x)*frame.bytespp as isize) as usize;
+            let len = ((end_x - start_x) * frame.bytespp as isize) as usize;
             let cur_index = ((ry * self.width as isize + start_x) * self.bytespp as isize) as usize;
-            let r_index = (((ry-y) * frame.width as isize + (start_x-x)) * frame.bytespp as isize) as usize;
-            let (_,right) = self.pixels.split_at_mut(cur_index);
-            let (_,r_right) = frame.pixels.split_at(r_index);
+            let r_index = (((ry - y) * frame.width as isize + (start_x - x))
+                * frame.bytespp as isize) as usize;
+            let (_, right) = self.pixels.split_at_mut(cur_index);
+            let (_, r_right) = frame.pixels.split_at(r_index);
             right[..len].copy_from_slice(&r_right[..len])
         }
         Ok(())

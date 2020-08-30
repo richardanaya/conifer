@@ -9,8 +9,8 @@ use crate::input::InputEvent;
 use crate::point::*;
 use crate::streamed_data::*;
 use crate::swipe::*;
-use std::sync::Mutex;
 use std::sync::Arc;
+use std::sync::Mutex;
 
 pub enum RunResponse {
     Exit,
@@ -27,7 +27,7 @@ pub struct Config {
 pub enum RunEvent {
     Startup,
     Time,
-    Swipe(Swipe)
+    Swipe(Swipe),
 }
 
 impl Config {
@@ -75,8 +75,7 @@ impl Config {
 
     pub fn run(
         &mut self,
-        mut f: impl FnMut(&mut Canvas, RunEvent, usize) -> Result<RunResponse, Box<dyn Error>>
-            + 'static,
+        mut f: impl FnMut(&mut Canvas, RunEvent, usize) -> Result<RunResponse, Box<dyn Error>> + 'static,
     ) -> Result<(), Box<dyn Error>> {
         let start = Instant::now();
         let mut last_t = 0 as usize;
@@ -128,14 +127,11 @@ impl Config {
             streamed_point: StreamedPoint::Nothing,
         };
 
-
         let (timer_tx, timer_rx) = flume::unbounded();
 
-        std::thread::spawn(move || {
-            loop {
-                timer_tx.send(42);
-                std::thread::sleep(std::time::Duration::from_secs(1));
-            }
+        std::thread::spawn(move || loop {
+            timer_tx.send(42);
+            std::thread::sleep(std::time::Duration::from_secs(1));
         });
 
         let (event_tx, event_rx) = flume::unbounded();
@@ -148,17 +144,17 @@ impl Config {
                     InputEvent::PartialX(x, time) => {
                         swipe_mem.update(SwipeFragment::PointFragment(PointFragment::X(time, x)))
                     }
-                    InputEvent::PartialY(y, time) => swipe_mem.update(SwipeFragment::PointFragment(
-                        PointFragment::Y(time, y as isize),
-                    )),
+                    InputEvent::PartialY(y, time) => swipe_mem.update(
+                        SwipeFragment::PointFragment(PointFragment::Y(time, y as isize)),
+                    ),
                     InputEvent::ButtonDown(_) => swipe_mem.update(SwipeFragment::End),
                     _ => StreamedState::Incomplete,
                 };
                 match stream {
                     StreamedState::Complete(swipe) | StreamedState::Standalone(swipe) => {
                         event_tx.send(swipe);
-                    },
-                    StreamedState::Incomplete => {},
+                    }
+                    StreamedState::Incomplete => {}
                 }
                 Ok(())
             });
@@ -170,19 +166,15 @@ impl Config {
             last_t = t;
 
             let time = match timer_rx.try_recv() {
-                Ok(t) => {
-                    Some(t)
-                }
+                Ok(t) => Some(t),
                 Err(flume::TryRecvError::Empty) => None,
                 Err(flume::TryRecvError::Disconnected) => panic!("why would timer disconnect!"),
             };
 
             let swipe = match event_rx.try_recv() {
-                Ok(s) => {
-                    Some(s)
-                }
-                Err(flume::TryRecvError::Empty) =>  None,
-                Err(flume::TryRecvError::Disconnected) =>  panic!("why would events disconnect!"),
+                Ok(s) => Some(s),
+                Err(flume::TryRecvError::Empty) => None,
+                Err(flume::TryRecvError::Disconnected) => panic!("why would events disconnect!"),
             };
 
             if let Some(s) = swipe {

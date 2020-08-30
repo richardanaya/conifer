@@ -12,8 +12,8 @@ fn main() -> Result<(), Box<dyn Error>> {
                 canvas.set_pixel(
                     x,
                     y,
-                    ((x as f32 / canvas.width as f32) * random()*255.0) as u8,
-                    ((y as f32 / canvas.height as f32) * random()*255.0) as u8,
+                    ((x as f32 / canvas.width as f32) * random() * 255.0) as u8,
+                    ((y as f32 / canvas.height as f32) * random() * 255.0) as u8,
                     0 as u8,
                 );
             }

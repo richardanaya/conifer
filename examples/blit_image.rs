@@ -6,11 +6,11 @@ fn main() -> Result<(), Box<dyn Error>> {
     // create a dithered blit mask
     let mut dither = img_pine.create_blitmap();
     for x in 0..dither.len() {
-        if (x+1)%2 == 0 {
+        if (x /4 ) % 2 == 0 {
             dither[x] = false;
         }
     }
-    
+
     Config::auto()?.run(move |canvas, swipe, _delta_time| {
         if swipe.is_some() {
             return Ok(RunResponse::Exit);

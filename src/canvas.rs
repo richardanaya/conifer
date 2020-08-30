@@ -82,10 +82,16 @@ impl Canvas {
     }
 
     pub fn create_blitmap(&self) -> Vec<bool> {
-        return vec![true;self.width*self.height];
+        return vec![true; self.width * self.height];
     }
 
-    pub fn blit_canvas(&mut self, canvas: &Canvas, x: isize, y: isize, blit_map:&[bool]) -> Result<(), &'static str> {
+    pub fn blit_canvas(
+        &mut self,
+        canvas: &Canvas,
+        x: isize,
+        y: isize,
+        blit_map: &[bool],
+    ) -> Result<(), &'static str> {
         // TODO figure out if this matterns
         //if self.bytespp != canvas.bytespp {
         //    return Err("cannot draw canvas due to incompatible bits per pixel");
@@ -96,14 +102,15 @@ impl Canvas {
         let end_x = isize::min(x + canvas.width as isize, self.width as isize);
         for ry in start_y..end_y {
             for rx in start_x..end_x {
-                let b_index = (((ry - y) * canvas.width as isize + (rx - x))) as usize;
+                let b_index = ((ry - y) * canvas.width as isize + (rx - x)) as usize;
                 if blit_map[b_index] {
-                    let cur_index = ((ry * self.width as isize + rx) * self.bytespp as isize) as usize;
+                    let cur_index =
+                        ((ry * self.width as isize + rx) * self.bytespp as isize) as usize;
                     let r_index = b_index * canvas.bytespp;
                     self.pixels[cur_index] = canvas.pixels[r_index];
-                    self.pixels[cur_index+1] = canvas.pixels[r_index+1];
-                    self.pixels[cur_index+2] = canvas.pixels[r_index+2];
-                }   
+                    self.pixels[cur_index + 1] = canvas.pixels[r_index + 1];
+                    self.pixels[cur_index + 2] = canvas.pixels[r_index + 2];
+                }
             }
         }
         Ok(())

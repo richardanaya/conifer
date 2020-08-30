@@ -5,8 +5,8 @@ use std::path::Path;
 pub struct Framebuffer {
     fb: framebuffer::Framebuffer,
 }
-const FB_ACTIVATE_NOW:u32 = 0;
-const FB_ACTIVATE_FORCE:u32 = 128;
+const FB_ACTIVATE_NOW: u32 = 0;
+const FB_ACTIVATE_FORCE: u32 = 128;
 
 impl Framebuffer {
     pub fn new<P: AsRef<Path>>(path_to_framebuffer: P) -> Result<Self, Box<dyn Error>> {
@@ -21,13 +21,13 @@ impl Framebuffer {
         })
     }
 
-    pub fn setup(&self) -> Result<(),Box<dyn Error>> {
+    pub fn setup(&self) -> Result<(), Box<dyn Error>> {
         framebuffer::Framebuffer::set_kd_mode(framebuffer::KdMode::Graphics)?;
         // force the framebuffer to activate
         // https://unix.stackexchange.com/questions/58420/writes-to-framebuffer-dev-fb0-do-not-seem-to-change-graphics-screen
         let mut screen = framebuffer::Framebuffer::get_var_screeninfo(&self.fb.device)?;
-        screen.activate |= FB_ACTIVATE_NOW | FB_ACTIVATE_FORCE; 
-        framebuffer::Framebuffer::put_var_screeninfo(&self.fb.device,&screen)?;
+        screen.activate |= FB_ACTIVATE_NOW | FB_ACTIVATE_FORCE;
+        framebuffer::Framebuffer::put_var_screeninfo(&self.fb.device, &screen)?;
         Ok(())
     }
 

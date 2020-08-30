@@ -44,18 +44,10 @@ impl Frame {
         //if self.bytespp != frame.bytespp {
         //    return Err("cannot draw frame due to incompatible bits per pixel");
         //}
-        let r_width = isize::min(x + frame.width as isize, self.width as isize) - x;
-        let r_height = isize::min(y + frame.height as isize, self.height as isize) - y;
-        for rx in 0..r_width {
-            for ry in 0..r_height {
-                let x = x + rx;
-                let y = y + ry;
-                // TODO do this mor efficiently
-                if x < 0 || y < 0 {
-                    continue;
-                }
-                let curr_index = ((y * self.width as isize + x) * self.bytespp as isize) as usize;
-                let r_index = ((ry * frame.width as isize + rx) * frame.bytespp as isize) as usize;
+        for ry in isize::max(y,0)..isize::min(y+frame.height as isize,self.height as isize) {
+            for rx in isize::max(x,0)..isize::min(x+frame.width as isize, self.width as isize) {
+                let curr_index = ((ry * self.width as isize + rx) * self.bytespp as isize) as usize;
+                let r_index = (((ry-y) * frame.width as isize + (rx-x)) * frame.bytespp as isize) as usize;
                 self.pixels[curr_index] = frame.pixels[r_index + 2];
                 self.pixels[curr_index + 1] = frame.pixels[r_index + 1];
                 self.pixels[curr_index + 2] = frame.pixels[r_index];

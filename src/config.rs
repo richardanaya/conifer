@@ -165,53 +165,49 @@ impl Config {
             let delta_t = t - last_t;
             last_t = t;
 
-            let time = match timer_rx.try_recv() {
-                Ok(t) => Some(t),
-                Err(flume::TryRecvError::Empty) => None,
+            match timer_rx.try_recv() {
+                Ok(t) => {
+                    match f(&mut canvas, RunEvent::Timer(t), delta_t) {
+                        Ok(RunResponse::Draw) => {
+                            fb.write_frame(&canvas.pixels);
+                        }
+                        Ok(RunResponse::Exit) => {
+                            fb.shutdown()?;
+                            std::process::exit(0);
+                        }
+                        Ok(RunResponse::NothingChanged) => {}
+                        Err(err) => {
+                            fb.shutdown()?;
+                            eprintln!("Error occured in user run loop: {}", err);
+                            std::process::exit(0);
+                        }
+                    }
+                },
+                Err(flume::TryRecvError::Empty) => (),
                 Err(flume::TryRecvError::Disconnected) => panic!("why would timer disconnect!"),
             };
 
-            let swipe = match swipe_rx.try_recv() {
-                Ok(s) => Some(s),
-                Err(flume::TryRecvError::Empty) => None,
+            match swipe_rx.try_recv() {
+                Ok(s) => {
+                    match f(&mut canvas, RunEvent::Swipe(s.clone()), delta_t) {
+                        Ok(RunResponse::Draw) => {
+                            fb.write_frame(&canvas.pixels);
+                        }
+                        Ok(RunResponse::Exit) => {
+                            fb.shutdown()?;
+                            std::process::exit(0);
+                        }
+                        Ok(RunResponse::NothingChanged) => {}
+                        Err(err) => {
+                            fb.shutdown()?;
+                            eprintln!("Error occured in user run loop: {}", err);
+                            std::process::exit(0);
+                        }
+                    }
+                },
+                Err(flume::TryRecvError::Empty) => (),
                 Err(flume::TryRecvError::Disconnected) => panic!("why would events disconnect!"),
             };
-
-            if let Some(s) = swipe {
-                match f(&mut canvas, RunEvent::Swipe(s.clone()), delta_t) {
-                    Ok(RunResponse::Draw) => {
-                        fb.write_frame(&canvas.pixels);
-                    }
-                    Ok(RunResponse::Exit) => {
-                        fb.shutdown()?;
-                        std::process::exit(0);
-                    }
-                    Ok(RunResponse::NothingChanged) => {}
-                    Err(err) => {
-                        fb.shutdown()?;
-                        eprintln!("Error occured in user run loop: {}", err);
-                        std::process::exit(0);
-                    }
-                }
-            }
-
-            if let Some(t) = time {
-                match f(&mut canvas, RunEvent::Timer(t), delta_t) {
-                    Ok(RunResponse::Draw) => {
-                        fb.write_frame(&canvas.pixels);
-                    }
-                    Ok(RunResponse::Exit) => {
-                        fb.shutdown()?;
-                        std::process::exit(0);
-                    }
-                    Ok(RunResponse::NothingChanged) => {}
-                    Err(err) => {
-                        fb.shutdown()?;
-                        eprintln!("Error occured in user run loop: {}", err);
-                        std::process::exit(0);
-                    }
-                }
-            }
         }
     }
 }

@@ -29,6 +29,12 @@ sudo addusr input richard
 # Logout and login
 ```
 
+To bring up a virtual terminal that isn't being used for X11, you can usually get to it by typing:
+
+```
+ctrl + alt + f2
+```
+
 ## Hello World
 
 ```rust

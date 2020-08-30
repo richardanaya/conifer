@@ -4,12 +4,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let img_pine = load_image("examples/images/pine.png")?;
 
     // create a dithered blit mask
-    let mut dither = img_pine.create_blitmap();
-    for x in 0..dither.len() {
-        if (x /4 ) % 2 == 0 {
-            dither[x] = false;
-        }
-    }
+    let mut dither = img_pine.create_blitmap_from_alpha();
 
     Config::auto()?.run(move |canvas, swipe, _delta_time| {
         if swipe.is_some() {

@@ -85,6 +85,20 @@ impl Canvas {
         return vec![true; self.width * self.height];
     }
 
+    pub fn create_blitmap_from_alpha(&self) -> Vec<bool> {
+        let mut b = vec![false; self.width * self.height];
+        for x in 0..self.width {
+            for y in 0..self.height {
+                let b_index = (y * self.width) + x;
+                let cur_index = b_index * self.bytespp;
+                if self.pixels[cur_index + 3] > 0 {
+                    b[b_index] = true;
+                }
+            }
+        }
+        b
+    }
+
     pub fn blit_canvas(
         &mut self,
         canvas: &Canvas,

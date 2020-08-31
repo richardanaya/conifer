@@ -6,15 +6,13 @@ fn main() -> Result<(), Box<dyn Error>> {
     config.run(move |canvas, event| {
         // if the user swiped, exit
         if let Event::Swipe(s) = event {
+            if s.finished {
+                return Ok(RunResponse::Exit);
+            }
             // draw something to framebuffer pixels
             for p in s.points {
-                // if we touch the bottom, exit
-                if p.y > (h as f32 * 0.9) as isize {
-                    return Ok(RunResponse::Exit);
-                }
                 canvas.set_pixel(p.x as usize, p.y as usize, 255, 255, 255);
             }
-            return Ok(RunResponse::Exit);
         }
         // let conifer know we want to push framebuffer pixels to screen
         Ok(RunResponse::Draw)

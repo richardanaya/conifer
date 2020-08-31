@@ -1,6 +1,6 @@
 use conifer::prelude::*;
 
-fn main() {
+fn main() -> Result<(), Box<dyn Error>> {
     let mut d = Config::auto().unwrap();
 
     d.run(|canvas, event| {
@@ -20,5 +20,6 @@ fn main() {
             }
         }
         Ok(RunResponse::Draw)
-    });
+    })?;
+    Ok(())
 }

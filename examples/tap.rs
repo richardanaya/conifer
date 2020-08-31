@@ -3,7 +3,7 @@ use conifer::prelude::*;
 use env_logger::init;
 use log::{debug, info, warn};
 
-fn main() {
+fn main() -> Result<(), Box<dyn Error>> {
     env_logger::init();
     info!("Starting");
     let mut d = Config::auto().unwrap();
@@ -23,5 +23,6 @@ fn main() {
             }
         }
         Ok(RunResponse::Draw)
-    });
+    })?;
+    Ok(())
 }

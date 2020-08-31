@@ -20,6 +20,6 @@ fn main() -> Result<(), Box<dyn Error>> {
         }
         // let conifer know we want to push framebuffer pixels to screen
         Ok(RunResponse::Draw)
-    });
+    })?;
     Ok(())
 }

@@ -27,7 +27,7 @@ pub struct Config {
 #[derive(Debug)]
 pub enum Event {
     Startup,
-    Timer(usize,usize),
+    Timer(usize, usize),
     Swipe(Swipe),
 }
 
@@ -101,8 +101,6 @@ impl Config {
             std::process::exit(0);
         }
 
-        
-
         match f(&mut canvas, Event::Startup) {
             Ok(RunResponse::Draw) => {
                 fb.write_frame(&canvas.pixels);
@@ -133,7 +131,7 @@ impl Config {
             let delta_t = cur_time - last_t;
             last_t = cur_time;
             timer_tx
-                .send(Event::Timer(delta_t,cur_time))
+                .send(Event::Timer(delta_t, cur_time))
                 .expect("something went wrong sending timer");
             std::thread::sleep(std::time::Duration::from_millis(1000 / 60));
         });

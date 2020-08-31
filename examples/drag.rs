@@ -8,9 +8,9 @@ fn main() {
     info!("Starting");
     let mut d = Config::auto().unwrap();
 
-    d.run(|canvas, swipe, delta_time| {
+    d.run(|canvas, event, delta_time| {
         debug!("Enter callback");
-        if let Some(swipe) = swipe {
+        if let Event::Swipe(swipe) = event {
             debug!("New swipe");
             let points = swipe.points.clone();
             if points.iter().any(|p| p.x > 750) {
@@ -24,5 +24,5 @@ fn main() {
             }
         }
         Ok(RunResponse::Draw)
-    })
+    });
 }

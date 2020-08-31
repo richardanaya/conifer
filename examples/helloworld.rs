@@ -2,7 +2,6 @@ use conifer::prelude::*;
 
 fn main() -> Result<(), Box<dyn Error>> {
     let mut config = Config::auto()?;
-    let h = config.screen_height();
     config.run(move |canvas, event| {
         // if the user swiped, exit
         if let Event::Swipe(s) = event {

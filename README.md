@@ -32,8 +32,10 @@ sudo addusr input richard
 To bring up a virtual terminal that isn't being used for X11, you can usually get to it by typing:
 
 ```
-ctrl + alt + f2
+ctrl + alt + f2 # or f3,f4...
 ```
+
+Sometimes this can only be done from a login screen.
 
 ## Hello World
 

@@ -1,7 +1,7 @@
 use conifer::prelude::*;
 
 fn main() -> Result<(), Box<dyn Error>> {
-    Config::auto()?.run(|canvas, event, _delta_time| {
+    Config::auto()?.run(|canvas, event| {
         // if the user swiped, exit
         if let Event::Swipe(_) = event {
             return Ok(RunResponse::Exit);

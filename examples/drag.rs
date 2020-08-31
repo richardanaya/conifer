@@ -8,7 +8,7 @@ fn main() {
     info!("Starting");
     let mut d = Config::auto().unwrap();
 
-    d.run(|canvas, event, delta_time| {
+    d.run(|canvas, event| {
         debug!("Enter callback");
         if let Event::Swipe(swipe) = event {
             debug!("New swipe");

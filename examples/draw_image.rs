@@ -2,7 +2,7 @@ use conifer::prelude::*;
 
 fn main() -> Result<(), Box<dyn Error>> {
     let img_pine = load_image("examples/images/pine.png")?;
-    Config::auto()?.run(move |canvas, event, _delta_time| {
+    Config::auto()?.run(move |canvas, event| {
         if let Event::Swipe(s) = event {
             if s.finished {
                 return Ok(RunResponse::Exit);

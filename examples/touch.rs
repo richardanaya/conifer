@@ -3,7 +3,7 @@ use conifer::prelude::*;
 fn main() {
     let mut d = Config::auto().unwrap();
 
-    d.run(|canvas, event, delta_time| {
+    d.run(|canvas, event| {
         if let Event::Swipe(swipe) = event {
             let points = swipe.points.clone();
             if points.iter().any(|p| p.x > 750) {

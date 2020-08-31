@@ -24,9 +24,10 @@ pub struct Config {
     input_device: Arc<Mutex<EventInput>>,
 }
 
+#[derive(Debug)]
 pub enum Event {
     Startup,
-    Timer(usize),
+    Timer(usize,usize),
     Swipe(Swipe),
 }
 
@@ -75,7 +76,7 @@ impl Config {
 
     pub fn run(
         &mut self,
-        mut f: impl FnMut(&mut Canvas, Event, usize) -> Result<RunResponse, Box<dyn Error>> + 'static,
+        mut f: impl FnMut(&mut Canvas, Event) -> Result<RunResponse, Box<dyn Error>> + 'static,
     ) -> Result<(), Box<dyn Error>> {
         let start = Instant::now();
         let mut last_t = 0 as usize;
@@ -100,11 +101,9 @@ impl Config {
             std::process::exit(0);
         }
 
-        let t = start.elapsed().as_millis() as usize;
-        let delta_t = t - last_t;
-        last_t = t;
+        
 
-        match f(&mut canvas, Event::Startup, delta_t) {
+        match f(&mut canvas, Event::Startup) {
             Ok(RunResponse::Draw) => {
                 fb.write_frame(&canvas.pixels);
             }
@@ -130,8 +129,11 @@ impl Config {
         let (timer_tx, timer_rx) = flume::unbounded();
 
         std::thread::spawn(move || loop {
+            let cur_time = start.elapsed().as_millis() as usize;
+            let delta_t = cur_time - last_t;
+            last_t = cur_time;
             timer_tx
-                .send(1000 / 60)
+                .send(Event::Timer(delta_t,cur_time))
                 .expect("something went wrong sending timer");
             std::thread::sleep(std::time::Duration::from_millis(1000 / 60));
         });
@@ -166,12 +168,8 @@ impl Config {
         });
 
         loop {
-            let t = start.elapsed().as_millis() as usize;
-            let delta_t = t - last_t;
-            last_t = t;
-
             match timer_rx.try_recv() {
-                Ok(t) => match f(&mut canvas, Event::Timer(t), delta_t) {
+                Ok(t) => match f(&mut canvas, t) {
                     Ok(RunResponse::Draw) => {
                         fb.write_frame(&canvas.pixels);
                     }
@@ -191,7 +189,7 @@ impl Config {
             };
 
             match swipe_rx.try_recv() {
-                Ok(s) => match f(&mut canvas, Event::Swipe(s.clone()), delta_t) {
+                Ok(s) => match f(&mut canvas, Event::Swipe(s.clone())) {
                     Ok(RunResponse::Draw) => {
                         fb.write_frame(&canvas.pixels);
                     }

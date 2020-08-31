@@ -6,8 +6,8 @@ fn main() -> Result<(), Box<dyn Error>> {
     // create a blit mask from any alpha > 0
     let blit_map = img_pine.create_blitmap_from_alpha();
 
-    Config::auto()?.run(move |canvas, swipe, _delta_time| {
-        if let Event::Swipe(_) = swipe {
+    Config::auto()?.run(move |canvas, event| {
+        if let Event::Swipe(_) = event {
             return Ok(RunResponse::Exit);
         }
         // let's draw some images randomly, but this time with a dithered mask

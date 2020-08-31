@@ -4,7 +4,7 @@ fn main() {
     let mut d = Config::auto().unwrap();
 
     d.run(|canvas, event, delta_time| {
-        if let RunEvent::Swipe(swipe) = event {
+        if let Event::Swipe(swipe) = event {
             let points = swipe.points.clone();
             if points.iter().any(|p| p.x > 750) {
                 // exit if we touch right of the screen

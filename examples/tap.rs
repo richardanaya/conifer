@@ -10,7 +10,7 @@ fn main() {
 
     d.run(|canvas, event, delta_time| {
         debug!("Enter callback");
-        if let RunEvent::Swipe(swipe) = event {
+        if let Event::Swipe(swipe) = event {
             debug!("New swipe");
             if swipe.points.iter().any(|p| p.x > 750) {
                 // exit if we touch right of the screen

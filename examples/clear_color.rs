@@ -4,7 +4,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let mut c = Config::auto()?;
     let green = Canvas::from_color(c.screen_width(), c.screen_height(), 0, 100, 0);
     c.run(move |canvas, event, _delta_time| {
-        if let RunEvent::Swipe(s) = event {
+        if let Event::Swipe(s) = event {
             if s.finished {
                 return Ok(RunResponse::Exit);
             }

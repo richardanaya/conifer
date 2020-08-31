@@ -3,7 +3,7 @@ use conifer::prelude::*;
 fn main() -> Result<(), Box<dyn Error>> {
     Config::auto()?.run(|canvas, event, _delta_time| {
         // if the user swiped, exit
-        if let RunEvent::Swipe(_) = event {
+        if let Event::Swipe(_) = event {
             return Ok(RunResponse::Exit);
         }
         // draw something to framebuffer pixels

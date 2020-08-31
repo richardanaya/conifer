@@ -24,7 +24,7 @@ pub struct Config {
     input_device: Arc<Mutex<EventInput>>,
 }
 
-pub enum RunEvent {
+pub enum Event {
     Startup,
     Timer(usize),
     Swipe(Swipe),
@@ -75,7 +75,7 @@ impl Config {
 
     pub fn run(
         &mut self,
-        mut f: impl FnMut(&mut Canvas, RunEvent, usize) -> Result<RunResponse, Box<dyn Error>> + 'static,
+        mut f: impl FnMut(&mut Canvas, Event, usize) -> Result<RunResponse, Box<dyn Error>> + 'static,
     ) -> Result<(), Box<dyn Error>> {
         let start = Instant::now();
         let mut last_t = 0 as usize;
@@ -104,7 +104,7 @@ impl Config {
         let delta_t = t - last_t;
         last_t = t;
 
-        match f(&mut canvas, RunEvent::Startup, delta_t) {
+        match f(&mut canvas, Event::Startup, delta_t) {
             Ok(RunResponse::Draw) => {
                 fb.write_frame(&canvas.pixels);
             }
@@ -130,8 +130,10 @@ impl Config {
         let (timer_tx, timer_rx) = flume::unbounded();
 
         std::thread::spawn(move || loop {
-            timer_tx.send(1000).expect("something went wrong sending timer");
-            std::thread::sleep(std::time::Duration::from_secs(1));
+            timer_tx
+                .send(1000 / 60)
+                .expect("something went wrong sending timer");
+            std::thread::sleep(std::time::Duration::from_millis(1000 / 60));
         });
 
         let (swipe_tx, swipe_rx) = flume::unbounded();
@@ -152,12 +154,15 @@ impl Config {
                 };
                 match stream {
                     StreamedState::Complete(swipe) | StreamedState::Standalone(swipe) => {
-                        swipe_tx.send(swipe).expect("something went wrong when sending swipe");
+                        swipe_tx
+                            .send(swipe)
+                            .expect("something went wrong when sending swipe");
                     }
                     StreamedState::Incomplete => {}
                 }
                 Ok(())
-            }).expect("not sure why listening to event device would fail");
+            })
+            .expect("not sure why listening to event device would fail");
         });
 
         loop {
@@ -166,21 +171,19 @@ impl Config {
             last_t = t;
 
             match timer_rx.try_recv() {
-                Ok(t) => {
-                    match f(&mut canvas, RunEvent::Timer(t), delta_t) {
-                        Ok(RunResponse::Draw) => {
-                            fb.write_frame(&canvas.pixels);
-                        }
-                        Ok(RunResponse::Exit) => {
-                            fb.shutdown()?;
-                            std::process::exit(0);
-                        }
-                        Ok(RunResponse::NothingChanged) => {}
-                        Err(err) => {
-                            fb.shutdown()?;
-                            eprintln!("Error occured in user run loop: {}", err);
-                            std::process::exit(0);
-                        }
+                Ok(t) => match f(&mut canvas, Event::Timer(t), delta_t) {
+                    Ok(RunResponse::Draw) => {
+                        fb.write_frame(&canvas.pixels);
+                    }
+                    Ok(RunResponse::Exit) => {
+                        fb.shutdown()?;
+                        std::process::exit(0);
+                    }
+                    Ok(RunResponse::NothingChanged) => {}
+                    Err(err) => {
+                        fb.shutdown()?;
+                        eprintln!("Error occured in user run loop: {}", err);
+                        std::process::exit(0);
                     }
                 },
                 Err(flume::TryRecvError::Empty) => (),
@@ -188,21 +191,19 @@ impl Config {
             };
 
             match swipe_rx.try_recv() {
-                Ok(s) => {
-                    match f(&mut canvas, RunEvent::Swipe(s.clone()), delta_t) {
-                        Ok(RunResponse::Draw) => {
-                            fb.write_frame(&canvas.pixels);
-                        }
-                        Ok(RunResponse::Exit) => {
-                            fb.shutdown()?;
-                            std::process::exit(0);
-                        }
-                        Ok(RunResponse::NothingChanged) => {}
-                        Err(err) => {
-                            fb.shutdown()?;
-                            eprintln!("Error occured in user run loop: {}", err);
-                            std::process::exit(0);
-                        }
+                Ok(s) => match f(&mut canvas, Event::Swipe(s.clone()), delta_t) {
+                    Ok(RunResponse::Draw) => {
+                        fb.write_frame(&canvas.pixels);
+                    }
+                    Ok(RunResponse::Exit) => {
+                        fb.shutdown()?;
+                        std::process::exit(0);
+                    }
+                    Ok(RunResponse::NothingChanged) => {}
+                    Err(err) => {
+                        fb.shutdown()?;
+                        eprintln!("Error occured in user run loop: {}", err);
+                        std::process::exit(0);
                     }
                 },
                 Err(flume::TryRecvError::Empty) => (),

@@ -43,20 +43,21 @@ Sometimes this can only be done from a login screen.
 use conifer::prelude::*;
 
 fn main() {
-    run(|canvas, event| {
+    run(move |canvas, event| {
+        // if the user swiped, exit
         if let Event::Swipe(s) = event {
-            // if the user releases finger, exit
             if s.finished {
                 return Ok(RunResponse::Exit);
             }
-            // draw something where users finger is
+            // draw something to framebuffer pixels
             for p in s.points {
                 canvas.set_pixel(p.x as usize, p.y as usize, 255, 255, 255);
             }
         }
         // let conifer know we want to push framebuffer pixels to screen
         Ok(RunResponse::Draw)
-    }).expect("an error occured while running game");
+    })
+    .expect("something went wrong")
 }
 ```
 

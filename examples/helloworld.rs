@@ -1,8 +1,7 @@
 use conifer::prelude::*;
 
-fn main() -> Result<(), Box<dyn Error>> {
-    let mut config = Config::auto()?;
-    config.run(move |canvas, event| {
+fn main() {
+    run(move |canvas, event| {
         // if the user swiped, exit
         if let Event::Swipe(s) = event {
             if s.finished {
@@ -15,6 +14,6 @@ fn main() -> Result<(), Box<dyn Error>> {
         }
         // let conifer know we want to push framebuffer pixels to screen
         Ok(RunResponse::Draw)
-    })?;
-    Ok(())
+    })
+    .expect("something went wrong")
 }

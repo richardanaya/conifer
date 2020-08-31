@@ -1,22 +1,20 @@
 use conifer::prelude::*;
 
 fn main() -> Result<(), Box<dyn Error>> {
-    Config::auto()?.run(|canvas, event| {
+    let mut config = Config::auto()?;
+    let h = config.screen_height();
+    config.run(move |canvas, event| {
         // if the user swiped, exit
-        if let Event::Swipe(_) = event {
-            return Ok(RunResponse::Exit);
-        }
-        // draw something to framebuffer pixels
-        for y in 0..canvas.height {
-            for x in 0..canvas.width {
-                canvas.set_pixel(
-                    x,
-                    y,
-                    ((x as f32 / canvas.width as f32) * random() * 255.0) as u8,
-                    ((y as f32 / canvas.height as f32) * random() * 255.0) as u8,
-                    0 as u8,
-                );
+        if let Event::Swipe(s) = event {
+            // draw something to framebuffer pixels
+            for p in s.points {
+                // if we touch the bottom, exit
+                if p.y > (h as f32 * 0.9) as isize {
+                    return Ok(RunResponse::Exit);
+                }
+                canvas.set_pixel(p.x as usize, p.y as usize, 255, 255, 255);
             }
+            return Ok(RunResponse::Exit);
         }
         // let conifer know we want to push framebuffer pixels to screen
         Ok(RunResponse::Draw)

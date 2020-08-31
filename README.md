@@ -43,7 +43,7 @@ Sometimes this can only be done from a login screen.
 use conifer::prelude::*;
 
 fn main() {
-    run(move |canvas, event| {
+    run(|canvas, event| {
         // if the user swiped, exit
         if let Event::Swipe(s) = event {
             if s.finished {

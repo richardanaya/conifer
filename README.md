@@ -44,12 +44,12 @@ use conifer::prelude::*;
 
 fn main() {
     run(|canvas, event| {
-        // if the user swiped, exit
         if let Event::Swipe(s) = event {
+            // if the user releases finger, exit
             if s.finished {
                 return Ok(RunResponse::Exit);
             }
-            // draw something to framebuffer pixels
+            // draw something where users finger is
             for p in s.points {
                 canvas.set_pixel(p.x as usize, p.y as usize, 255, 255, 255);
             }

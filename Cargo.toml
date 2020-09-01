@@ -20,5 +20,5 @@ image = "0.23"
 flume = "0.7"
 
 [dev-dependencies]
-env_logger = "*"
-log = "*"
+env_logger = "0.7"
+log = "0.4"

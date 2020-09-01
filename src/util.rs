@@ -22,11 +22,11 @@ pub fn load_image<P: AsRef<Path>>(path: P) -> Result<Canvas, Box<dyn Error>> {
     for r in img.pixels() {
         let p = r.2;
         // this ordering works for my framebuffer, does it work for all?
-        pixels.push((p[2] as u32) << 24 | (p[1] as u32) << 16 | (p[0] as u32) << 8 | p[3] as u32);
+        pixels.push((p[3] as u32) << 24 | (p[0] as u32) << 16 | (p[1] as u32) << 8 | p[2] as u32);
     }
     Ok(Canvas::new(d.0 as usize, d.1 as usize, &pixels))
 }
 
 pub fn color(r: u8, g: u8, b: u8) -> u32 {
-    (b as u32) << 24 | (g as u32) << 16 | (r as u32) << 8 | 255
+    255 << 24 | (r as u32) << 16 | (g as u32) << 8 | b as u32
 }

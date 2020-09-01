@@ -4,7 +4,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let img_pine = load_image("examples/images/pine.png")?;
 
     // create a blit mask from any alpha > 0
-    let blit_map = img_pine.create_blitmap_from_alpha();
+    let img_pine_blit_map = BlitMap::from_canvas_with_alpha(&img_pine);
 
     Config::auto()?.run(move |canvas, event| {
         if let Event::Swipe(_) = event {
@@ -16,7 +16,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                 &img_pine,
                 (random() * canvas.width as f32) as isize - img_pine.width as isize / 2,
                 (random() * canvas.height as f32) as isize - img_pine.height as isize / 2,
-                &blit_map,
+                &img_pine_blit_map,
             )?;
         }
         Ok(RunResponse::Draw)

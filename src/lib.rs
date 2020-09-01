@@ -1,5 +1,6 @@
 use std::error::Error;
 
+pub mod blit_map;
 pub mod canvas;
 pub mod config;
 pub mod framebuffer;

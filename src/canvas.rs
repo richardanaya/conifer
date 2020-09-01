@@ -1,3 +1,4 @@
+use crate::blit_map::BlitMap;
 use crate::point::Point;
 use crate::util::color_from_rgb;
 use std::error::Error;
@@ -62,30 +63,12 @@ impl Canvas {
         Ok(())
     }
 
-    pub fn create_blitmap(&self) -> Vec<bool> {
-        return vec![true; self.width * self.height];
-    }
-
-    pub fn create_blitmap_from_alpha(&self) -> Vec<bool> {
-        let mut b = vec![false; self.width * self.height];
-        for x in 0..self.width {
-            for y in 0..self.height {
-                let b_index = (y * self.width) + x;
-                let cur_index = b_index;
-                if self.pixels[cur_index + 3] > 0 {
-                    b[b_index] = true;
-                }
-            }
-        }
-        b
-    }
-
     pub fn blit_canvas(
         &mut self,
         canvas: &Canvas,
         x: isize,
         y: isize,
-        blit_map: &[bool],
+        blit_map: &BlitMap,
     ) -> Result<(), &'static str> {
         // TODO figure out if this matterns
         //if self.bytespp != canvas.bytespp {
@@ -98,7 +81,7 @@ impl Canvas {
         for ry in start_y..end_y {
             for rx in start_x..end_x {
                 let b_index = ((ry - y) * canvas.width as isize + (rx - x)) as usize;
-                if blit_map[b_index] {
+                if blit_map.map[b_index] {
                     let cur_index = ((ry * self.width as isize + rx) as isize) as usize;
                     let r_index = b_index;
                     self.pixels[cur_index] = canvas.pixels[r_index];

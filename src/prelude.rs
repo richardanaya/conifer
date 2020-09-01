@@ -1,3 +1,4 @@
+pub use crate::blit_map::BlitMap;
 pub use crate::canvas::Canvas;
 pub use crate::config::Config;
 pub use crate::config::Event;

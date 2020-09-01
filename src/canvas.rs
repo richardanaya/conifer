@@ -1,5 +1,5 @@
 use crate::point::Point;
-use crate::util::color;
+use crate::util::rgb;
 use std::error::Error;
 
 #[derive(Debug)]
@@ -22,7 +22,7 @@ impl Canvas {
         let mut pixels: Vec<u32> = vec![];
         for _ in 0..width {
             for _ in 0..height {
-                pixels.push(color(r, g, b));
+                pixels.push(rgb(r, g, b));
             }
         }
         Canvas {

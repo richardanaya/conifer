@@ -27,6 +27,6 @@ pub fn load_image<P: AsRef<Path>>(path: P) -> Result<Canvas, Box<dyn Error>> {
     Ok(Canvas::new(d.0 as usize, d.1 as usize, &pixels))
 }
 
-pub fn color(r: u8, g: u8, b: u8) -> u32 {
+pub fn rgb(r: u8, g: u8, b: u8) -> u32 {
     255 << 24 | (r as u32) << 16 | (g as u32) << 8 | b as u32
 }

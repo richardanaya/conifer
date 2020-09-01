@@ -7,7 +7,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     env_logger::init();
     info!("Starting");
     let mut d = Config::auto().unwrap();
-    let white = color(255, 255, 255);
+    let white = rgb(255, 255, 255);
     d.run(move |canvas, event| {
         debug!("Enter callback");
         if let Event::Swipe(swipe) = event {

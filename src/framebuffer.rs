@@ -52,7 +52,13 @@ impl Framebuffer {
         return (self.fb.var_screen_info.bits_per_pixel / 8) as usize;
     }
 
-    pub fn write_frame(&mut self, pixels: &[u8]) {
-        self.fb.write_frame(pixels);
+    pub fn write_frame(&mut self, pixels: &[u32]) {
+        let v_bytes: &[u8] = unsafe {
+            std::slice::from_raw_parts(
+                pixels.as_ptr() as *const u8,
+                pixels.len() * std::mem::size_of::<i32>(),
+            )
+        };
+        self.fb.write_frame(v_bytes);
     }
 }

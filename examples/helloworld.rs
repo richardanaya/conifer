@@ -1,7 +1,8 @@
 use conifer::prelude::*;
 
 fn main() {
-    run(|canvas, event| {
+    let white = color_from_rgb(255, 255, 255);
+    run(move |canvas, event| {
         // if the user swiped, exit
         if let Event::Swipe(s) = event {
             if s.finished {
@@ -9,7 +10,7 @@ fn main() {
             }
             // draw something to framebuffer pixels
             for p in s.points {
-                canvas.set_pixel(p.x as usize, p.y as usize, 255, 255, 255);
+                canvas.set_pixel(p.x as usize, p.y as usize, white);
             }
         }
         // let conifer know we want to push framebuffer pixels to screen

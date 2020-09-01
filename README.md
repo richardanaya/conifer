@@ -43,8 +43,9 @@ Sometimes this can only be done from a login screen.
 use conifer::prelude::*;
 
 fn main() {
-    run(|canvas, event| {
-        // if the user swiped
+    let white = color_from_rgb(255, 255, 255);
+    run(move |canvas, event| {
+        // if the user swiped, exit
         if let Event::Swipe(s) = event {
             // if the users finger released, exit
             if s.finished {
@@ -52,7 +53,7 @@ fn main() {
             }
             // draw something where finger is
             for p in s.points {
-                canvas.set_pixel(p.x as usize, p.y as usize, 255, 255, 255);
+                canvas.set_pixel(p.x as usize, p.y as usize, white);
             }
         }
         // let conifer know we want to push framebuffer pixels to screen

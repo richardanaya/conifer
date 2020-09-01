@@ -85,13 +85,10 @@ impl Config {
 
         let w = fb.width();
         let h = fb.height();
-        let line_length = fb.line_length();
         let mut canvas = Canvas {
             width: w,
             height: h,
-            line_length,
-            bytespp: fb.bytes_per_pixel(),
-            pixels: vec![0u8; line_length * h],
+            pixels: vec![0; w * h],
         };
 
         if let Err(err) = fb.setup() {

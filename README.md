@@ -2,7 +2,7 @@
 
 <a href="https://docs.rs/conifer"><img src="https://img.shields.io/badge/docs-latest-blue.svg?style=flat-square" alt="docs.rs docs" /></a>
 
-A simple canvas buffer game engine for PinePhone, Raspberry Pi, and other devices with touch screens.
+A simple framebuffer game engine for PinePhone, Raspberry Pi, and other devices with touch screens.
 
 - [x] make games without X11!
 - [x] auto detect virtual terminal framebuffer

@@ -14,7 +14,7 @@ readme="README.md"
 [dependencies]
 framebuffer = "0.2"
 evdev = "0.10"
-libc = "*"
+libc = "0.2"
 rand = "0"
 image = "0.23"
 flume = "0.7"

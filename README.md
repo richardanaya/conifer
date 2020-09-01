@@ -17,7 +17,7 @@ A simple framebuffer game engine for PinePhone, Raspberry Pi, and other devices 
 
 ```toml
 [dependencies]
-conifer = "0.0"
+conifer = "0.1"
 ```
 ## Before You Start
 

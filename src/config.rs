@@ -85,12 +85,7 @@ impl Config {
 
         let w = fb.width();
         let h = fb.height();
-        let mut canvas = Canvas {
-            width: w,
-            height: h,
-            pixels: vec![0; w * h],
-        };
-
+        let mut canvas = Canvas::from_dimensions(w, h);
         if let Err(err) = fb.setup() {
             // try to shut down because because being stuck in graphics mode is really bad
             fb.shutdown()?;
@@ -100,7 +95,10 @@ impl Config {
 
         match f(&mut canvas, Event::Startup) {
             Ok(RunResponse::Draw) => {
-                fb.write_frame(&canvas.pixels);
+                if canvas.is_dirty {
+                    fb.write_frame(&canvas.pixels);
+                    canvas.reset_dirty_flag();
+                }
             }
             Ok(RunResponse::Exit) => {
                 fb.shutdown()?;
@@ -166,7 +164,10 @@ impl Config {
             match timer_rx.try_recv() {
                 Ok(t) => match f(&mut canvas, t) {
                     Ok(RunResponse::Draw) => {
-                        fb.write_frame(&canvas.pixels);
+                        if canvas.is_dirty {
+                            fb.write_frame(&canvas.pixels);
+                            canvas.reset_dirty_flag();
+                        }
                     }
                     Ok(RunResponse::Exit) => {
                         fb.shutdown()?;
@@ -186,7 +187,10 @@ impl Config {
             match swipe_rx.try_recv() {
                 Ok(s) => match f(&mut canvas, Event::Swipe(s.clone())) {
                     Ok(RunResponse::Draw) => {
-                        fb.write_frame(&canvas.pixels);
+                        if canvas.is_dirty {
+                            fb.write_frame(&canvas.pixels);
+                            canvas.reset_dirty_flag();
+                        }
                     }
                     Ok(RunResponse::Exit) => {
                         fb.shutdown()?;

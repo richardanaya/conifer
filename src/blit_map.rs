@@ -17,7 +17,7 @@ impl BlitMap {
             for y in 0..canvas.height {
                 let b_index = (y * canvas.width) + x;
                 let cur_index = b_index;
-                if canvas.pixels[cur_index + 3] > 0 {
+                if canvas.pixels[cur_index] & 4278190080 > 0 {
                     b[b_index] = true;
                 }
             }

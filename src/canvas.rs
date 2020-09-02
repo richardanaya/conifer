@@ -5,7 +5,7 @@ use std::error::Error;
 
 #[derive(Debug)]
 pub struct Canvas {
-    pub is_dirty: bool,
+    is_dirty: bool,
     pub width: usize,
     pub height: usize,
     pub pixels: Vec<u32>,
@@ -45,6 +45,17 @@ impl Canvas {
         }
     }
 
+    #[inline(always)]
+    pub fn is_dirty(&self) -> bool {
+        self.is_dirty
+    }
+
+    #[inline(always)]
+    pub fn set_dirty(&mut self) {
+        self.is_dirty = true;
+    }
+
+    #[inline(always)]
     pub fn reset_dirty_flag(&mut self) {
         self.is_dirty = false;
     }

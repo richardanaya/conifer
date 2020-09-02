@@ -95,7 +95,7 @@ impl Config {
 
         match f(&mut canvas, Event::Startup) {
             Ok(RunResponse::Draw) => {
-                if canvas.is_dirty {
+                if canvas.is_dirty() {
                     fb.write_frame(&canvas.pixels);
                     canvas.reset_dirty_flag();
                 }
@@ -164,7 +164,7 @@ impl Config {
             match timer_rx.try_recv() {
                 Ok(t) => match f(&mut canvas, t) {
                     Ok(RunResponse::Draw) => {
-                        if canvas.is_dirty {
+                        if canvas.is_dirty() {
                             fb.write_frame(&canvas.pixels);
                             canvas.reset_dirty_flag();
                         }
@@ -187,7 +187,7 @@ impl Config {
             match swipe_rx.try_recv() {
                 Ok(s) => match f(&mut canvas, Event::Swipe(s.clone())) {
                     Ok(RunResponse::Draw) => {
-                        if canvas.is_dirty {
+                        if canvas.is_dirty() {
                             fb.write_frame(&canvas.pixels);
                             canvas.reset_dirty_flag();
                         }

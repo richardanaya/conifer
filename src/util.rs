@@ -30,3 +30,20 @@ pub fn load_image<P: AsRef<Path>>(path: P) -> Result<Canvas, Box<dyn Error>> {
 pub fn color_from_rgb(r: u8, g: u8, b: u8) -> u32 {
     255 << 24 | (r as u32) << 16 | (g as u32) << 8 | b as u32
 }
+
+pub fn color_from_rgba(r: u8, g: u8, b: u8, a: u8) -> u32 {
+    (a as u32) << 24 | (r as u32) << 16 | (g as u32) << 8 | b as u32
+}
+
+pub fn rgba_from_color(color: u32) -> (u8, u8, u8, u8) {
+    // assuming it's encoded as argb
+    (((color & 4278190080) >> 24) as u8,
+    ((color & 16711680) >> 16) as u8,
+    ((color & 65280) >> 8) as u8,
+    (color & 255) as u8
+    )
+}
+
+pub fn coord_in_area(x: usize, y: usize, x0: usize, y0: usize, xm: usize, ym: usize) -> bool {
+    x >= x0 && x <= xm && y >= y0 && y <= ym
+}

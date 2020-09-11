@@ -16,5 +16,5 @@ pub fn run(
     f: impl FnMut(&mut canvas::Canvas, config::Event) -> Result<config::RunResponse, Box<dyn Error>>
         + 'static,
 ) -> Result<(), Box<dyn Error>> {
-    config::Config::auto()?.run(true,f)
+    config::Config::auto()?.run(f)
 }

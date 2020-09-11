@@ -76,7 +76,6 @@ impl Config {
 
     pub fn run(
         &mut self,
-        use_timer: bool,
         mut f: impl FnMut(&mut Canvas, Event) -> Result<RunResponse, Box<dyn Error>> + 'static,
     ) -> Result<(), Box<dyn Error>> {
         let start = Instant::now();
@@ -164,7 +163,6 @@ impl Config {
         });
 
         loop {
-            if use_timer {
             match timer_rx.try_recv() {
                 Ok(t) => match f(&mut canvas, t) {
                     Ok(RunResponse::Draw) => {
@@ -184,7 +182,7 @@ impl Config {
                 Err(flume::TryRecvError::Empty) => (),
                 Err(flume::TryRecvError::Disconnected) => panic!("why would timer disconnect!"),
             };
-}
+
             match swipe_rx.try_recv() {
                 Ok(s) => match f(&mut canvas, Event::Swipe(s.clone())) {
                     Ok(RunResponse::Draw) => {

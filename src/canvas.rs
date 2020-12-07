@@ -85,8 +85,6 @@ impl Canvas {
                     let cur_index = ((ry * self.width as isize + rx) as isize) as usize;
                     let r_index = b_index;
                     self.pixels[cur_index] = canvas.pixels[r_index];
-                    self.pixels[cur_index + 1] = canvas.pixels[r_index + 1];
-                    self.pixels[cur_index + 2] = canvas.pixels[r_index + 2];
                 }
             }
         }
